@@ -1,0 +1,26 @@
+[
+  {
+    "date": "2024-03-30",
+    "city": "New York",
+    "station": "GHCND:USW00094728",
+    "datatype": "PRCP",
+    "value": 0.39,
+    "unit": "in"
+  },
+  {
+    "date": "2024-03-30",
+    "city": "New York",
+    "station": "GHCND:USW00094728",
+    "datatype": "MAXTemp",
+    "value": 62.06,
+    "unit": "°F"
+  },
+  {
+    "date": "2024-03-30",
+    "city": "New York",
+    "station": "GHCND:USW00094728",
+    "datatype": "MINTemp",
+    "value": 41,
+    "unit": "°F"
+  }
+]
