@@ -1,9 +1,0 @@
-{"metadata":
-    {"resultset":{"offset":1,"count":4,"limit":10}},
-    "results":[
-        {"date":"2025-02-10T00:00:00","datatype":"PRCP","station":"GHCND:USC00356750","attributes":",,H,2400","value":0.0},
-        {"date":"2025-02-11T00:00:00","datatype":"PRCP","station":"GHCND:USC00356750","attributes":",,H,2400","value":0.0},
-        {"date":"2025-02-12T00:00:00","datatype":"PRCP","station":"GHCND:USC00356750","attributes":",,H,2400","value":0.0},
-        {"date":"2025-02-13T00:00:00","datatype":"PRCP","station":"GHCND:USC00356750","attributes":",,H,2400","value":4.1}
-    ]
-}
