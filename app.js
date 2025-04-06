@@ -41,25 +41,48 @@ app.get("/", (req, res) => {
 
 // Route to display the form to add weather data
 app.get("/add-weather", (req, res) => {
-  res.render("add-weather", { message: null });
+  res.render("add-weather", {
+    message: null,
+    data: null,
+  });
 });
 
 // Route to handle the form submission
 app.post("/add-weather", async (req, res) => {
   try {
+    // Get values from the form
+    const {
+      station_id,
+      temp,
+      precip,
+      w_speed,
+      w_direction,
+      visibility,
+      timestamp,
+    } = req.body;
+
     const query = `
       INSERT INTO bike_ped.weather_data
       (station_id, record_time, "temp", precip, w_speed, w_direction, visibility, "timestamp")
-      VALUES('A', NOW(), 'C', 'D', 'E', 'F', 'G', '2024-03-21 14:30:00')
+      VALUES($1, NOW(), $2, $3, $4, $5, $6, $7)
     `;
 
-    await pool.query(query);
+    await pool.query(query, [
+      station_id,
+      temp,
+      precip,
+      w_speed,
+      w_direction,
+      visibility,
+      timestamp,
+    ]);
 
     res.render("add-weather", {
       message: {
         type: "success",
         text: "Weather data added successfully!",
       },
+      data: req.body,
     });
   } catch (err) {
     console.error("Error executing query", err.stack);
@@ -68,6 +91,7 @@ app.post("/add-weather", async (req, res) => {
         type: "error",
         text: `Error adding weather data: ${err.message}`,
       },
+      data: req.body,
     });
   }
 });

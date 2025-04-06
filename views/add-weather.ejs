@@ -60,6 +60,26 @@
       a:hover {
         text-decoration: underline;
       }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
     </style>
   </head>
   <body>
@@ -70,16 +90,91 @@
     <% } %>
 
     <div class="info-box">
-      <h3>SQL Statement to Execute:</h3>
-      <code
-        >INSERT INTO bike_ped.weather_data (station_id, record_time, "temp",
-        precip, w_speed, w_direction, visibility, "timestamp") VALUES('A',
-        NOW(), 'C', 'D', 'E', 'F', 'G', '2024-03-21 14:30:00');</code
-      >
+      <h3>Edit Weather Data Values:</h3>
+      <p>Modify the values below before submitting to the database.</p>
     </div>
 
     <form method="POST" action="/add-weather">
-      <button type="submit">Execute SQL</button>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="station_id">Station ID:</label>
+          <input
+            type="text"
+            id="station_id"
+            name="station_id"
+            value="<%= data ? data.station_id : 'A' %>"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="temp">Temperature:</label>
+          <input
+            type="text"
+            id="temp"
+            name="temp"
+            value="<%= data ? data.temp : 'C' %>"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="precip">Precipitation:</label>
+          <input
+            type="text"
+            id="precip"
+            name="precip"
+            value="<%= data ? data.precip : 'D' %>"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="w_speed">Wind Speed:</label>
+          <input
+            type="text"
+            id="w_speed"
+            name="w_speed"
+            value="<%= data ? data.w_speed : 'E' %>"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="w_direction">Wind Direction:</label>
+          <input
+            type="text"
+            id="w_direction"
+            name="w_direction"
+            value="<%= data ? data.w_direction : 'F' %>"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="visibility">Visibility:</label>
+          <input
+            type="text"
+            id="visibility"
+            name="visibility"
+            value="<%= data ? data.visibility : 'G' %>"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="timestamp">Timestamp:</label>
+          <input
+            type="text"
+            id="timestamp"
+            name="timestamp"
+            value="<%= data ? data.timestamp : '2024-03-21 14:30:00' %>"
+            required
+          />
+        </div>
+      </div>
+
+      <button type="submit">Submit Weather Data</button>
     </form>
 
     <a href="/">Back to Home</a>
