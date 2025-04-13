@@ -1,29 +1,17 @@
 import React, { useState, useEffect } from "react";
+
 const Card = ({ children }) => <div className="border p-4 rounded">{children}</div>;
 const CardContent = ({ children }) => <div>{children}</div>;
 
 const NOAA_API_URL = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data";
 const TOKEN = "DSMKjBYfHJWySltevdzyvdgKGkdIFmOl"; 
-const STATION_ID = "GHCND:USW00094728"; 
+const STATION_ID = "GHCND:USW00013739"; 
 const DATA_TYPES = ["TMAX", "TMIN", "PRCP"];
-const REPORT_DATE = "2024-03-30"; //hardcoded date
+const REPORT_DATE = "2024-03-30"; 
 
 const WeatherReport = () => {
   const [weatherData, setWeatherData] = useState(null);
   const [error, setError] = useState(null);
-
-  const downloadJSON = () => {
-    const dataStr = JSON.stringify(weatherData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `weather_report_${REPORT_DATE}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   useEffect(() => {
     const fetchWeatherData = async () => {
@@ -60,7 +48,7 @@ const WeatherReport = () => {
           }
           return {
             date: entry.date.split("T")[0],
-            city: "New York",
+            city: "Washington, DC", 
             station: entry.station,
             datatype: datatypeFormatted,
             value: Math.round(convertedValue * 100) / 100,
@@ -85,10 +73,6 @@ const WeatherReport = () => {
           <pre className="text-red-500 bg-gray-200 p-2 rounded">Error: {error}</pre>
         ) : weatherData ? (
           <>
-            <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(weatherData, null, 2)}</pre>
-            <button onClick={downloadJSON} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
-              Download JSON
-            </button>
           </>
         ) : (
           <p>Loading...</p>
