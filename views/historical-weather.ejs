@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Historical Weather Data - BikePed Database</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .message {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #dff0d8;
+        color: #3c763d;
+        border: 1px solid #d6e9c6;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ef9a9a;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .weather-data {
+        background-color: #f5f5f5;
+        padding: 20px;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+      .hourly-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+      .hour-card {
+        background-color: white;
+        padding: 15px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .hour-card h4 {
+        margin: 0 0 10px 0;
+        color: #2196f3;
+      }
+      .temp-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #333;
+      }
+      .precip-value {
+        color: #1976d2;
+        font-weight: bold;
+      }
+      .chart-container {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        height: 400px; /* Set a fixed height for better visualization */
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <h1>Historical Weather Data</h1>
+
+    <% if (message) { %>
+    <div class="message <%= message.type %>"><%= message.text %></div>
+    <% } %>
+
+    <form method="GET" action="/historical-weather">
+      <div class="form-group">
+        <label for="date">Select Date:</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          required
+          value="<%= searchDate || '' %>"
+        />
+      </div>
+      <div class="form-group">
+        <label for="location">Location:</label>
+        <input
+          type="text"
+          id="location"
+          name="location"
+          required
+          value="<%= location || 'Portland,OR' %>"
+          placeholder="City,State or Latitude,Longitude"
+        />
+      </div>
+      <button type="submit">Get Historical Weather</button>
+    </form>
+
+    <% if (weatherData && weatherData.days[0].hours) { %>
+    <div class="weather-data">
+      <h2>
+        Weather for <%= weatherData.address %> on <%=
+        weatherData.days[0].datetime %>
+      </h2>
+
+      <!-- Combined Chart -->
+      <div class="chart-container">
+        <canvas id="combinedChart"></canvas>
+      </div>
+
+      <!-- Hourly Cards -->
+      <div class="hourly-grid">
+        <% weatherData.days[0].hours.forEach(hour => { %>
+        <div class="hour-card">
+          <h4><%= hour.datetime.split(':')[0] %>:00</h4>
+          <div>
+            <span class="temp-value"><%= hour.temp %>°F</span>
+          </div>
+          <div>Feels like: <%= hour.feelslike %>°F</div>
+          <div>
+            Precip: <span class="precip-value"><%= hour.precip %> in</span>
+          </div>
+          <div>Humidity: <%= hour.humidity %>%</div>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <script>
+      // Combined Temperature and Precipitation Chart
+      const ctx = document.getElementById('combinedChart').getContext('2d');
+
+      // Create gradient for temperature line
+      const tempGradient = ctx.createLinearGradient(0, 0, 0, 400);
+      tempGradient.addColorStop(0, 'rgba(255, 99, 132, 0.8)');
+      tempGradient.addColorStop(1, 'rgba(255, 99, 132, 0.2)');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: <%- JSON.stringify(weatherData.days[0].hours.map(h => h.datetime.split(':')[0] + ':00')) %>,
+          datasets: [
+            {
+              label: 'Temperature (°F)',
+              data: <%- JSON.stringify(weatherData.days[0].hours.map(h => h.temp)) %>,
+              borderColor: 'rgb(255, 99, 132)',
+              backgroundColor: tempGradient,
+              yAxisID: 'y-temp',
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: 'Precipitation (in)',
+              data: <%- JSON.stringify(weatherData.days[0].hours.map(h => h.precip)) %>,
+              type: 'bar',
+              backgroundColor: 'rgba(54, 162, 235, 0.5)',
+              borderColor: 'rgb(54, 162, 235)',
+              yAxisID: 'y-precip',
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: 'Temperature and Precipitation Throughout the Day',
+              font: {
+                size: 16
+              }
+            },
+            legend: {
+              position: 'top'
+            }
+          },
+          scales: {
+            'y-temp': {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Temperature (°F)'
+              },
+              grid: {
+                drawOnChartArea: false
+              }
+            },
+            'y-precip': {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Precipitation (in)'
+              },
+              min: 0,
+              grid: {
+                drawOnChartArea: false
+              }
+            }
+          }
+        }
+      });
+    </script>
+    <% } %>
+
+    <p style="margin-top: 20px">
+      <a href="/" style="color: #2196f3; text-decoration: none">Back to Home</a>
+    </p>
+  </body>
+</html>
