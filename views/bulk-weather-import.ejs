@@ -94,11 +94,36 @@
       th {
         background-color: #f5f5f5;
       }
+      .hourly-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .hour-card {
+        background-color: white;
+        padding: 15px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .hour-card h4 {
+        margin: 0 0 10px 0;
+        color: #2196f3;
+      }
+      .temp-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #333;
+      }
+      .precip-value {
+        color: #1976d2;
+        font-weight: bold;
+      }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
-    <h1>Import 3 PM Weather Data</h1>
+    <h1>Import Weather Data</h1>
 
     <% if (message) { %>
     <div class="message <%= message.type %>"><%= message.text %></div>
@@ -126,21 +151,119 @@
           value="<%= date || '' %>"
         />
       </div>
-      <button type="submit">Get 3 PM Weather Data</button>
+      <button type="submit">Get Weather Data</button>
     </form>
 
-    <% if (weatherData) { %>
+    <% if (weatherData && weatherData.days && weatherData.days[0]) { %>
     <div class="import-summary">
-      <h3>Import Summary</h3>
+      <h3>Weather Data Summary</h3>
       <p>Location: <%= weatherData.address %></p>
       <p>Date: <%= date %></p>
-      <p>Time: 3:00 PM</p>
-      <% const threePMData = weatherData.days[0].hours.find(hour =>
-      hour.datetime.startsWith('15:')); %> <% if (threePMData) { %>
-      <p>Temperature: <%= threePMData.temp %>°F</p>
-      <p>Precipitation: <%= threePMData.precip %> in</p>
-      <% } %>
+
+      <!-- Temperature and Precipitation Chart -->
+      <div class="chart-container">
+        <canvas id="weatherChart"></canvas>
+      </div>
+
+      <!-- Hourly Data Cards -->
+      <h3>Hourly Weather Data</h3>
+      <div class="hourly-grid">
+        <% weatherData.days[0].hours.forEach(hour => { %>
+        <div class="hour-card">
+          <h4><%= hour.datetime.split(':')[0] %>:00</h4>
+          <div>
+            <span class="temp-value"><%= hour.temp %>°F</span>
+          </div>
+          <div>Feels like: <%= hour.feelslike %>°F</div>
+          <div>
+            Precipitation:
+            <span class="precip-value"><%= hour.precip %> in</span>
+          </div>
+          <div>Humidity: <%= hour.humidity %>%</div>
+          <div>Wind: <%= hour.windspeed %> mph</div>
+          <div>Conditions: <%= hour.conditions %></div>
+        </div>
+        <% }); %>
+      </div>
     </div>
+
+    <script>
+      // Create the chart
+      const ctx = document.getElementById('weatherChart').getContext('2d');
+
+      // Create gradient for temperature line
+      const tempGradient = ctx.createLinearGradient(0, 0, 0, 400);
+      tempGradient.addColorStop(0, 'rgba(255, 99, 132, 0.8)');
+      tempGradient.addColorStop(1, 'rgba(255, 99, 132, 0.2)');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: <%- JSON.stringify(weatherData.days[0].hours.map(h => h.datetime.split(':')[0] + ':00')) %>,
+          datasets: [
+            {
+              label: 'Temperature (°F)',
+              data: <%- JSON.stringify(weatherData.days[0].hours.map(h => h.temp)) %>,
+              borderColor: 'rgb(255, 99, 132)',
+              backgroundColor: tempGradient,
+              yAxisID: 'y-temp',
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: 'Precipitation (in)',
+              data: <%- JSON.stringify(weatherData.days[0].hours.map(h => h.precip)) %>,
+              type: 'bar',
+              backgroundColor: 'rgba(54, 162, 235, 0.5)',
+              borderColor: 'rgb(54, 162, 235)',
+              yAxisID: 'y-precip',
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: 'Temperature and Precipitation Throughout the Day',
+              font: {
+                size: 16
+              }
+            },
+            legend: {
+              position: 'top'
+            }
+          },
+          scales: {
+            'y-temp': {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Temperature (°F)'
+              }
+            },
+            'y-precip': {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Precipitation (in)'
+              },
+              grid: {
+                drawOnChartArea: false
+              }
+            }
+          }
+        }
+      });
+    </script>
     <% } %>
 
     <p style="margin-top: 20px">
