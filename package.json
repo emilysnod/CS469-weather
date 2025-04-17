@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.14.1"
+  },
+  "name": "cs469-weather",
+  "description": "Location is based on \r - Latitude and Longitude (Decimal degree) e.g: q=48.8567,2.3508\r - city name e.g.: q=Paris\r - US zip e.g.: q=10001",
+  "version": "1.0.0",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

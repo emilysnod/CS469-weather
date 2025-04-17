@@ -1,5 +1,22 @@
+import pkg from "pg"
+import 'dotenv/config'
+import fetch from "node-fetch";
 
-function getYesterday() {
+const { Pool } = pkg;
+
+const pool = new Pool({
+    user: "cap_degraham",
+    host: "portaldb.its.pdx.edu",
+    database: "bikeped_capstone",
+    password: process.env.DB_PW,
+    port: 5432, // Default PostgreSQL port
+    ssl: {
+      rejectUnauthorized: false,
+      sslmode: "require",
+    },
+  });
+
+  function getYesterday() {
     const date = new Date();
     const yesterday = new Date(date);
     yesterday.setDate(date.getDate() - 1);
@@ -9,49 +26,52 @@ function getYesterday() {
     return `${year}-${month}-${day}`;
 }
 
-const API_KEY = '38b39ab3cc3d428c915204616250104';
-// trial ends 4/15/2025, may need new key
-
 const ZIP = '97214';
 const DATE = getYesterday();
+const API_KEY = process.env.API_KEY;
 const URL = `https://api.weatherapi.com/v1/history.json?q=${ZIP}&dt=${DATE}&key=${API_KEY}`;
 
-document.addEventListener("DOMContentLoaded", function () {
-    fetch(URL) 
-        .then(response => response.json())
-        .then(data => {
-            createTable(data);
-        })
-        .catch(error => console.error('Error loading JSON:', error));
-});
+async function insertWeatherData() {
+  try {
+    const res = await fetch(URL);
+    if (!res.ok) {
+      throw new Error(`Weather API error: ${res.status} ${res.statusText}`);
+    }
+    const data = await res.json();
 
-const createTable = (data) => {
-    const location = data.location.name + ', ' + data.location.region + ', ' + data.location.country;
     const hourly = data.forecast.forecastday[0].hour;
-    const date = data.forecast.forecastday[0].date;
-    const container = document.createElement("div");
-    const header = document.createElement("h2");
-    header.innerText = `${location}, ${date}`;
-    container.appendChild(header);
 
-    const table = document.createElement("table");
-    const headingRow = document.createElement("tr");
-    headingRow.innerHTML= `
-        <th>Time - 24 Hour</th>
-        <th>Temperature - F</th>
-        <th>Precepitation - in</th>
-    `
-    table.appendChild(headingRow);
+    const client = await pool.connect();
+    console.log("Connected to PostgreSQL!");
 
-    hourly.forEach(hour => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${hour.time.split(" ")[1]}</td>
-            <td>${hour.temp_f}</td>
-            <td>${hour.precip_in}</td>
-        `;
-        table.appendChild(row);
-    })
-    container.appendChild(table);
-    document.body.appendChild(container);
-};
+    // Optional: Create a table if it doesn’t exist
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS bike_ped.portland_or_weather_data (
+        id SERIAL PRIMARY KEY,
+        time TIMESTAMP,
+        temp_f VARCHAR(10),
+        precip_in VARCHAR(10)
+      );
+    `);
+
+    for (const hour of hourly) {
+      const time = hour.time;
+      const temp_f = hour.temp_f;
+      const precip_in = hour.precip_in;
+
+      await client.query(
+        `INSERT INTO bike_ped.portland_or_weather_data (time, temp_f, precip_in) VALUES ($1, $2, $3)`,
+        [time, temp_f, precip_in]
+      );
+    }
+
+    console.log(`Inserted ${hourly.length} rows for ${ZIP} on ${DATE}.`);
+    client.release();
+    pool.end(); // close the pool once you're done
+
+  } catch (error) {
+    console.error("Error during data fetch or insert:", error);
+  }
+}
+
+insertWeatherData();
