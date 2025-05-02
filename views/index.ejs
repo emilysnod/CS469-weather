@@ -3,59 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BikePed Database</title>
+    <title>NOAA Stations</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
       }
-      .message {
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 4px;
+      #response {
+        margin-top: 20px;
       }
-      .success {
-        background-color: #dff0d8;
-        color: #3c763d;
-        border: 1px solid #d6e9c6;
-      }
-      .error {
-        background-color: #ffebee;
-        color: #c62828;
-        border: 1px solid #ef9a9a;
-      }
-      .btn {
-        display: inline-block;
-        padding: 10px 15px;
-        background-color: #2196f3;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        margin: 10px 10px 10px 0;
-      }
-      .btn:hover {
-        background-color: #0b7dda;
+      .station {
+        margin-bottom: 10px;
       }
     </style>
   </head>
   <body>
-    <h1>BikePed Database Interface</h1>
+    <h1>NOAA Weather Stations</h1>
+    <button id="fetchButton">Fetch Stations</button>
+    <div id="response"></div>
 
-    <% if (message) { %>
-    <div class="message <%= message.type %>"><%= message.text %></div>
-    <% } %>
+    <script>
+      document
+        .getElementById("fetchButton")
+        .addEventListener("click", async () => {
+          const url =
+            "https://www.ncei.noaa.gov/cdo-web/api/v2/stations?extent=45.36,-122.8250,45.65,-122.5250&limit=10";
+          const token = process.env.NOAA_API_TOKEN; // Use the token passed from the server
 
-    <h2>Database Operations</h2>
+          try {
+            const response = await fetch(url, {
+              headers: { token: token },
+            });
+            if (!response.ok) throw new Error("Network response was not ok");
+            const data = await response.json();
+            displayStations(data.results);
+          } catch (error) {
+            document.getElementById(
+              "response"
+            ).innerText = `Error: ${error.message}`;
+          }
+        });
 
-    <a href="/add-weather" class="btn">Add Weather Data</a>
-
-    <h3>Features:</h3>
-    <ul>
-      <li>Direct PostgreSQL connection</li>
-      <li>Easy database operations</li>
-      <li>Modern JavaScript stack</li>
-    </ul>
+      function displayStations(stations) {
+        const responseDiv = document.getElementById("response");
+        responseDiv.innerHTML = "";
+        stations.forEach((station) => {
+          const stationDiv = document.createElement("div");
+          stationDiv.className = "station";
+          stationDiv.innerHTML = `<strong>${station.name}</strong><br>Location: ${station.latitude}, ${station.longitude}`;
+          responseDiv.appendChild(stationDiv);
+        });
+      }
+    </script>
   </body>
 </html>

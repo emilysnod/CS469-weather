@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOAA Stations</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      #response {
+        margin-top: 20px;
+      }
+      .station {
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>NOAA Weather Stations</h1>
+    <button id="fetchButton">Fetch Stations</button>
+    <div id="response"></div>
+
+    <script>
+      document
+        .getElementById("fetchButton")
+        .addEventListener("click", async () => {
+          const url =
+            "https://www.ncei.noaa.gov/cdo-web/api/v2/stations?extent=45.36,-122.8250,45.65,-122.5250&limit=10";
+          const token = "YOUR_NOAA_API_TOKEN"; // Replace with your actual NOAA API token
+
+          try {
+            const response = await fetch(url, {
+              headers: { token: token },
+            });
+            if (!response.ok) throw new Error("Network response was not ok");
+            const data = await response.json();
+            displayStations(data.results);
+          } catch (error) {
+            document.getElementById(
+              "response"
+            ).innerText = `Error: ${error.message}`;
+          }
+        });
+
+      function displayStations(stations) {
+        const responseDiv = document.getElementById("response");
+        responseDiv.innerHTML = "";
+        stations.forEach((station) => {
+          const stationDiv = document.createElement("div");
+          stationDiv.className = "station";
+          stationDiv.innerHTML = `<strong>${station.name}</strong><br>Location: ${station.latitude}, ${station.longitude}`;
+          responseDiv.appendChild(stationDiv);
+        });
+      }
+    </script>
+  </body>
+</html>

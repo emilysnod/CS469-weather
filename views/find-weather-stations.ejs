@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Find Weather Stations</title>
+  </head>
+  <body>
+    <h1>Find Closest Weather Stations</h1>
+    <form action="/find-weather-stations" method="POST">
+      <label for="city">Enter City:</label>
+      <input type="text" id="city" name="city" required />
+      <button type="submit">Find Stations</button>
+    </form>
+
+    <% if (stations) { %>
+    <h2>Closest Weather Stations</h2>
+    <ul>
+      <% stations.forEach(function(station) { %>
+      <li>
+        <strong><%= station.name %></strong><br />
+        Location: <%= station.location %><br />
+        Hourly Data Available: <%= station.hasHourlyData ? 'Yes' : 'No' %>
+      </li>
+      <% }); %>
+    </ul>
+    <% } %> <% if (message) { %>
+    <p><%= message %></p>
+    <% } %>
+  </body>
+</html>

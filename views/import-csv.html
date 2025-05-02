@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Import NOAA CSV Data</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1>Import NOAA CSV Data</h1>
+      <div class="card mt-4">
+        <div class="card-body">
+          <form id="csvImportForm">
+            <div class="mb-3">
+              <label for="stationId" class="form-label">Station ID</label>
+              <input
+                type="text"
+                class="form-control"
+                id="stationId"
+                value="72698024229"
+                required
+              />
+              <div class="form-text">
+                Enter the NOAA station ID (e.g., 01361099999)
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col">
+                <label for="startYear" class="form-label">Start Year</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="startYear"
+                  min="1900"
+                  max="2024"
+                  value="2020"
+                  required
+                />
+              </div>
+              <div class="col">
+                <label for="endYear" class="form-label">End Year</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="endYear"
+                  min="1900"
+                  max="2024"
+                  value="2020"
+                  required
+                />
+              </div>
+              <div class="col">
+                <label for="lineLimit" class="form-label"
+                  >Number of Lines to Import</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="lineLimit"
+                  min="0"
+                  value="10"
+                  required
+                />
+                <div class="form-text">Enter 0 to import all lines</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Select CSV Columns to Import</label>
+              <div class="form-text mb-2">
+                Select the columns you want to import from the CSV file
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="STATION"
+                      id="col-STATION"
+                    />
+                    <label class="form-check-label" for="col-STATION"
+                      >STATION</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="DATE"
+                      id="col-DATE"
+                    />
+                    <label class="form-check-label" for="col-DATE">DATE</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="LATITUDE"
+                      id="col-LATITUDE"
+                    />
+                    <label class="form-check-label" for="col-LATITUDE"
+                      >LATITUDE</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="LONGITUDE"
+                      id="col-LONGITUDE"
+                    />
+                    <label class="form-check-label" for="col-LONGITUDE"
+                      >LONGITUDE</label
+                    >
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="ELEVATION"
+                      id="col-ELEVATION"
+                    />
+                    <label class="form-check-label" for="col-ELEVATION"
+                      >ELEVATION</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="NAME"
+                      id="col-NAME"
+                    />
+                    <label class="form-check-label" for="col-NAME">NAME</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="TMP"
+                      id="col-TMP"
+                    />
+                    <label class="form-check-label" for="col-TMP"
+                      >TEMPERATURE (TMP)</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="WND"
+                      id="col-WND"
+                    />
+                    <label class="form-check-label" for="col-WND"
+                      >WIND (WND)</label
+                    >
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="DEW"
+                      id="col-DEW"
+                    />
+                    <label class="form-check-label" for="col-DEW"
+                      >DEW POINT (DEW)</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="SLP"
+                      id="col-SLP"
+                    />
+                    <label class="form-check-label" for="col-SLP"
+                      >SEA LEVEL PRESSURE (SLP)</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      value="VIS"
+                      id="col-VIS"
+                    />
+                    <label class="form-check-label" for="col-VIS"
+                      >VISIBILITY (VIS)</label
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Import CSV</button>
+          </form>
+        </div>
+      </div>
+      <div id="status" class="mt-3"></div>
+      <div id="progress" class="mt-3"></div>
+    </div>
+
+    <script>
+      document
+        .getElementById("csvImportForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const stationId = document.getElementById("stationId").value;
+          const startYear = parseInt(
+            document.getElementById("startYear").value
+          );
+          const endYear = parseInt(document.getElementById("endYear").value);
+          const lineLimit = parseInt(
+            document.getElementById("lineLimit").value
+          );
+          const csvColumns = Array.from(
+            document.querySelectorAll('input[type="checkbox"]:checked')
+          ).map((checkbox) => checkbox.value);
+
+          const statusDiv = document.getElementById("status");
+          const progressDiv = document.getElementById("progress");
+
+          if (startYear > endYear) {
+            statusDiv.innerHTML = `<div class="alert alert-danger">Start year must be less than or equal to end year</div>`;
+            return;
+          }
+
+          if (csvColumns.length === 0) {
+            statusDiv.innerHTML = `<div class="alert alert-danger">Please specify at least one column to import</div>`;
+            return;
+          }
+
+          try {
+            statusDiv.innerHTML =
+              '<div class="alert alert-info">Starting import process...</div>';
+            progressDiv.innerHTML = "";
+
+            let totalRowsImported = 0;
+            let yearsProcessed = 0;
+            const totalYears = endYear - startYear + 1;
+
+            for (let year = startYear; year <= endYear; year++) {
+              const csvUrl = `https://www.ncei.noaa.gov/data/global-hourly/access/${year}/${stationId}.csv`;
+
+              progressDiv.innerHTML = `<div class="alert alert-info">Processing year ${year} (${
+                yearsProcessed + 1
+              }/${totalYears})...</div>`;
+
+              const response = await fetch("/api/import-csv", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  csvUrl,
+                  columns: csvColumns,
+                  lineLimit,
+                }),
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
+                totalRowsImported += result.rowsImported;
+                yearsProcessed++;
+                progressDiv.innerHTML = `<div class="alert alert-info">Processed year ${year} (${yearsProcessed}/${totalYears}) - Imported ${result.rowsImported} rows</div>`;
+              } else {
+                throw new Error(
+                  `Error processing year ${year}: ${result.error}`
+                );
+              }
+            }
+
+            statusDiv.innerHTML = `<div class="alert alert-success">Successfully imported ${totalRowsImported} rows from ${totalYears} years!</div>`;
+            progressDiv.innerHTML = "";
+          } catch (error) {
+            statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            progressDiv.innerHTML = "";
+          }
+        });
+    </script>
+  </body>
+</html>
