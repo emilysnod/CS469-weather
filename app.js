@@ -4,6 +4,7 @@ const { Pool } = require("pg");
 const path = require("path");
 const axios = require("axios");
 const dayjs = require("dayjs");
+const weatherDataRouter = require("./routes/weather-data");
 
 // Initialize Express app
 const app = express();
@@ -591,6 +592,19 @@ app.post("/api/import-csv", async (req, res) => {
     console.error("Error importing CSV:", error);
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Routes
+app.use("/api", weatherDataRouter);
+
+// Serve the import page
+app.get("/import", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "import-csv.html"));
+});
+
+// Serve the visualization page
+app.get("/visualize", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "visualize-data.html"));
 });
 
 // Start the server
