@@ -1,100 +1,64 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-const Card = ({ children }) => <div className="border p-4 rounded">{children}</div>;
-const CardContent = ({ children }) => <div>{children}</div>;
+const App = () => {
+  const [zip, setZip] = useState("97222");
+  const [weather, setWeather] = useState(null);
+  const [error, setError] = useState("");
 
-const NOAA_API_URL = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data";
-const TOKEN = "DSMKjBYfHJWySltevdzyvdgKGkdIFmOl";
-const ZIP_CODE = "20002"; 
-const DATA_TYPES = ["TMAX", "TMIN", "PRCP"];
-const REPORT_DATE = "2022-03-30";
+  const fetchWeather = async (zip) => {
+    const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${zip}&days=1`;
 
-const WeatherReport = () => {
-  const [weatherData, setWeatherData] = useState(null);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchWeatherData = async () => {
-      try {
-        const dataTypeParams = DATA_TYPES.map((type) => `&datatypeid=${type}`).join("");
-        const weatherUrl = `${NOAA_API_URL}?datasetid=GHCND&locationid=ZIP:${ZIP_CODE}&startdate=${REPORT_DATE}&enddate=${REPORT_DATE}&limit=100${dataTypeParams}`;
-        console.log("Fetching weather data from:", weatherUrl);
-
-        const response = await fetch(weatherUrl, {
-          headers: { token: TOKEN },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch weather data");
-        }
-
-        const data = await response.json();
-        console.log("Weather Data:", data);
-
-        if (!data.results || data.results.length === 0) {
-          throw new Error("No weather data available for the selected date");
-        }
-
-        const formattedData = data.results.map((entry) => {
-          let convertedValue;
-          let unit;
-
-          if (entry.datatype === "PRCP") {
-            convertedValue = entry.value / 25.4;
-            unit = "in";
-          } else {
-            const celsius = entry.value / 10;
-            convertedValue = (celsius * 9) / 5 + 32;
-            unit = "°F";
-          }
-
-          let datatypeFormatted = entry.datatype;
-          if (datatypeFormatted === "TMAX") {
-            datatypeFormatted = "MAXTemp";
-          } else if (datatypeFormatted === "TMIN") {
-            datatypeFormatted = "MINTemp";
-          }
-
-          return {
-            date: entry.date.split("T")[0],
-            zip: ZIP_CODE,
-            datatype: datatypeFormatted,
-            value: Math.round(convertedValue * 100) / 100,
-            unit,
-          };
-        });
-
-        setWeatherData(formattedData);
-        await fetch("http://localhost:3001/weather", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formattedData),
-        });
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Weather API error:", errorData);
+        throw new Error("Failed to fetch weather data.");
       }
-    };
 
-    fetchWeatherData();
-  }, []);
+      const data = await response.json();
+      console.log("Weather data:", data);
+
+      setWeather({
+        city: data.location.name,
+        state: data.location.region,
+        temp: data.current.temp_f,
+        precip: data.forecast.forecastday[0].day.totalprecip_in,
+        time: data.current.last_updated,
+      });
+            setError("");
+    } catch (error) {
+      console.error("Fetch failed:", error);
+      setError("Failed to fetch weather data.");
+      setWeather(null);
+    }
+  };
 
   return (
-    <Card className="p-4">
-      <CardContent>
-        <h2 className="text-xl font-bold">Weather Report for ZIP {ZIP_CODE} on {REPORT_DATE}</h2>
-        {error ? (
-          <pre className="text-red-500 bg-gray-200 p-2 rounded">Error: {error}</pre>
-        ) : weatherData ? (
-          <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(weatherData, null, 2)}</pre>
-        ) : (
-          <p>Loading...</p>
-        )}
-      </CardContent>
-    </Card>
+    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1>Weather Lookup</h1>
+      <input
+        type="text"
+        value={zip}
+        onChange={(e) => setZip(e.target.value)}
+        placeholder="Enter ZIP Code"
+      />
+      <button onClick={() => fetchWeather(zip)}>Get Weather</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {weather && (
+        <div style={{ marginTop: "1rem" }}>
+          <p><strong>City:</strong> {weather.city}</p>
+          <p><strong>State:</strong> {weather.state}</p>
+          <p><strong>Temperature:</strong> {weather.temp} °F</p>
+          <p><strong>Precipitation:</strong> {weather.precip} in</p>
+          <p><strong>Data Time:</strong> {weather.time}</p>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default WeatherReport;
+export default App;
