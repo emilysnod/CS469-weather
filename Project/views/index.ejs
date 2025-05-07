@@ -17,9 +17,33 @@
     </style>
   </head>
   <body>
-    <h1>NOAA Weather Stations</h1>
-    <button id="fetchButton">Fetch Stations</button>
-    <div id="response"></div>
+    <%- include('partials/header') %>
+
+    <div class="container mt-4">
+      <h1>Find Nearest Weather Stations</h1>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <form action="/find-closest-stations" method="POST">
+            <div class="form-group">
+              <label for="city">Enter City Name:</label>
+              <input
+                type="text"
+                class="form-control"
+                id="city"
+                name="city"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">
+              Find Stations
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/footer') %>
 
     <script>
       document

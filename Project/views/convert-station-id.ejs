@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Convert Station IDs</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .converter-form {
+        margin: 20px 0;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+      }
+      .converter-form input[type="text"] {
+        padding: 8px;
+        width: 300px;
+        margin-right: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .converter-form select {
+        padding: 8px;
+        margin-right: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .converter-form button {
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .converter-form button:hover {
+        background-color: #0056b3;
+      }
+      .result-card {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .error-message {
+        padding: 10px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        color: #721c24;
+        margin: 10px 0;
+      }
+      .examples {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Convert Station IDs</h1>
+
+    <div class="converter-form">
+      <form action="/convert-station-id" method="POST">
+        <input type="text" name="id" placeholder="Enter station ID" required />
+        <select name="type" required>
+          <option value="ghcnd">GHCND ID to WMO ID</option>
+          <option value="wmo">WMO ID to GHCND ID</option>
+        </select>
+        <button type="submit">Convert</button>
+      </form>
+    </div>
+
+    <div class="examples">
+      <h3>Example IDs:</h3>
+      <p>
+        <strong>GHCND ID format:</strong> GHCND:USW00024229 (Portland Airport)
+      </p>
+      <p><strong>WMO ID format:</strong> 72698024229 (Portland Airport)</p>
+    </div>
+
+    <% if (error) { %>
+    <div class="error-message"><%= error %></div>
+    <% } %> <% if (result) { %>
+    <div class="result-card">
+      <h3>Conversion Result</h3>
+      <p><strong><%= result.originalType %>:</strong> <%= result.original %></p>
+      <p>
+        <strong><%= result.convertedType %>:</strong> <%= result.converted %>
+      </p>
+    </div>
+    <% } %>
+  </body>
+</html>

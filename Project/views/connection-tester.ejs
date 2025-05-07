@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Database Connection Tester</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .status-box {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #dff0d8;
+        border: 1px solid #d6e9c6;
+        color: #3c763d;
+      }
+      .error {
+        background-color: #f2dede;
+        border: 1px solid #ebccd1;
+        color: #a94442;
+      }
+      .info {
+        background-color: #d9edf7;
+        border: 1px solid #bce8f1;
+        color: #31708f;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Database Connection Tester</h1>
+
+    <div class="status-box info">
+      <h3>Current Connection Settings</h3>
+      <pre id="connectionInfo"><%= connectionInfo %></pre>
+    </div>
+
+    <% if (message) { %>
+    <div class="status-box <%= message.type %>">
+      <h3>
+        <%= message.type === 'success' ? 'Connection Successful' : 'Connection
+        Error' %>
+      </h3>
+      <pre><%= message.text %></pre>
+    </div>
+    <% } %>
+
+    <div>
+      <h3>Test Queries</h3>
+      <form action="/connection-tester" method="POST">
+        <button type="submit" name="test" value="simple">
+          Run Simple Test (SELECT NOW())
+        </button>
+      </form>
+      <br />
+      <form action="/connection-tester" method="POST">
+        <button type="submit" name="test" value="tables">
+          List All Tables
+        </button>
+      </form>
+    </div>
+
+    <% if (queryResult) { %>
+    <div class="status-box info">
+      <h3>Query Result</h3>
+      <pre><%= JSON.stringify(queryResult, null, 2) %></pre>
+    </div>
+    <% } %>
+  </body>
+</html>

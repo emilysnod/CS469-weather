@@ -1,0 +1,52 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+  <h2>Closest Weather Stations to <%= city %></h2>
+
+  <% if (error) { %>
+  <div class="alert alert-danger" role="alert"><%= error %></div>
+  <% } %> <% if (stations && stations.length > 0) { %>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>USAF</th>
+          <th>WBAN</th>
+          <th>Station Name</th>
+          <th>Country</th>
+          <th>State</th>
+          <th>Distance (km)</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Elevation (m)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% stations.forEach(station => { %>
+        <tr>
+          <td><%= station.USAF %></td>
+          <td><%= station.WBAN %></td>
+          <td><%= station['STATION NAME'] %></td>
+          <td><%= station.CTRY %></td>
+          <td><%= station.STATE %></td>
+          <td><%= station.distance.toFixed(2) %></td>
+          <td><%= station.LAT %></td>
+          <td><%= station.LON %></td>
+          <td><%= station.ELEV %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <% } else if (!error) { %>
+  <div class="alert alert-info" role="alert">
+    No stations found near this location.
+  </div>
+  <% } %>
+
+  <div class="mt-4">
+    <a href="/" class="btn btn-primary">Search Another Location</a>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
