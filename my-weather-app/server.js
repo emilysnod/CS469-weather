@@ -23,11 +23,16 @@ app.post("/weather", async (req, res) => {
 
   try {
     for (const item of weatherData) {
-        await pool.query(
-          "INSERT INTO weather_data (date, city, zipcode, station, datatype, value, unit) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-          [item.date, "Washington, DC", item.zip, null, item.datatype, item.value, item.unit]
-                );
-      }
+      await pool.query(
+        "INSERT INTO weather_data (date, city, zipcode, precipitation_in) VALUES ($1, $2, $3, $4)",
+        [
+          item.date,
+          item.city,
+          item.zip,
+          item.value  
+        ]
+      );
+    }
 
     res.status(200).send("Weather data saved to DB");
   } catch (err) {

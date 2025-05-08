@@ -7,9 +7,7 @@ const NOAA_API_URL = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data";
 const TOKEN = "DSMKjBYfHJWySltevdzyvdgKGkdIFmOl";
 const ZIP_CODE = "20002"; 
 const DATA_TYPES = ["TMAX", "TMIN", "PRCP"];
-//const REPORT_DATE = "2022-03-30";
-const START_DATE = "2022-03-30T01:00:00";
-const END_DATE = "2022-03-30T02:00:00";
+const REPORT_DATE = "2022-03-30";
 
 const WeatherReport = () => {
   const [weatherData, setWeatherData] = useState(null);
@@ -19,7 +17,7 @@ const WeatherReport = () => {
     const fetchWeatherData = async () => {
       try {
         const dataTypeParams = DATA_TYPES.map((type) => `&datatypeid=${type}`).join("");
-        const weatherUrl = `${NOAA_API_URL}?datasetid=GHCND&locationid=ZIP:${ZIP_CODE}&startdate=${START_DATE}&enddate=${END_DATE}&limit=100${dataTypeParams}`;
+        const weatherUrl = `${NOAA_API_URL}?datasetid=GHCND&locationid=ZIP:${ZIP_CODE}&startdate=${REPORT_DATE}&enddate=${REPORT_DATE}&limit=100${dataTypeParams}`;
         console.log("Fetching weather data from:", weatherUrl);
 
         const response = await fetch(weatherUrl, {
@@ -86,7 +84,7 @@ const WeatherReport = () => {
   return (
     <Card className="p-4">
       <CardContent>
-        <h2 className="text-xl font-bold">Weather Report for ZIP {ZIP_CODE} on {START_DATE} to {END_DATE}</h2>
+        <h2 className="text-xl font-bold">Weather Report for ZIP {ZIP_CODE} on {REPORT_DATE}</h2>
         {error ? (
           <pre className="text-red-500 bg-gray-200 p-2 rounded">Error: {error}</pre>
         ) : weatherData ? (

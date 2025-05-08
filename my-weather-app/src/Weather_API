@@ -1,0 +1,93 @@
+import React, { useState } from "react";
+
+const App = () => {
+  const [zip, setZip] = useState("20003");
+  const [weeklyForecast, setWeeklyForcast] = useState([]);
+  const [error, setError] = useState("");
+  const [locationInfo, setLocationInfo] = useState(null);
+
+  const fetchWeather = async (zip) => {
+    const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${zip}&days=7`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Weather API error:", errorData);
+        throw new Error("Failed to fetch weather data.");
+      }
+
+      const data = await response.json();
+      console.log("Weather data:", data);
+
+      setWeeklyForcast(data.forecast.forecastday);
+      setLocationInfo({
+        city: data.location.name,
+        state: data.location.region,
+      });
+      setError("");
+
+      const formattedData = data.forecast.forecastday.map((day) => ({
+        date: day.date,
+        city: data.location.name,
+        zip: zip,
+        datatype: "precipitation",
+        value: day.day.totalprecip_in,
+        unit: "in",
+        temp_f: day.day.avgtemp_f,
+      }));
+
+      const postResponse = await fetch("http://localhost:3001/weather", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formattedData),
+      });
+
+      if (!postResponse.ok) {
+        throw new Error("Failed to send data to the server.");
+      }
+
+      console.log("Weather data sent to server successfully");
+    } catch (error) {
+      console.error("Fetch failed:", error);
+      setError("Failed to fetch weather data.");
+      setWeeklyForcast([]);
+    }
+  };
+
+  return (
+    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1>Weather Lookup</h1>
+      <input
+        type="text"
+        value={zip}
+        onChange={(e) => setZip(e.target.value)}
+        placeholder="Enter ZIP Code"
+      />
+      <button onClick={() => fetchWeather(zip)}>Get Weather</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {weeklyForecast.length > 0 && (
+        <div style={{ marginTop: "2rem" }}>
+          <h2>7-Day Forecast</h2>
+          {weeklyForecast.map((day) => (
+            <div key={day.date} style={{ marginBottom: "1rem" }}>
+              <p><strong>Date:</strong> {day.date}</p>
+              {locationInfo && (
+                <p><strong>Location:</strong> {locationInfo.city}, {locationInfo.state}</p>
+              )}
+              <p><strong>Precipitation:</strong> {day.day.totalprecip_in} in</p>
+              <p><strong>Avg Temp:</strong> {day.day.avgtemp_f} °F</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
