@@ -23,6 +23,9 @@ def crawl_and_download(base_url):
         for file_url in files:
             if file_url.endswith('.csv'):
                 filename = file_url.split('/')[-1]
+                # Skip files that start or end with 99999
+                if filename.startswith('99999') or filename.endswith('99999.csv'):
+                    continue
                 year = year_url.rstrip('/').split('/')[-1]
                 # station = year_url.rstrip('/').split('/')[-1]
                 outdir = os.path.join("downloads", year)
