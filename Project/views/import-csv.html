@@ -17,13 +17,7 @@
           <form id="csvImportForm">
             <div class="mb-3">
               <label for="stationId" class="form-label">Station ID</label>
-              <input
-                type="text"
-                class="form-control"
-                id="stationId"
-                value="72698024229"
-                required
-              />
+              <input type="text" class="form-control" id="stationId" required />
               <div class="form-text">
                 Enter the NOAA station ID (e.g., 01361099999)
               </div>
@@ -82,6 +76,8 @@
                       type="checkbox"
                       value="STATION"
                       id="col-STATION"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-STATION"
                       >STATION</label
@@ -93,6 +89,8 @@
                       type="checkbox"
                       value="DATE"
                       id="col-DATE"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-DATE">DATE</label>
                   </div>
@@ -102,6 +100,8 @@
                       type="checkbox"
                       value="LATITUDE"
                       id="col-LATITUDE"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-LATITUDE"
                       >LATITUDE</label
@@ -113,6 +113,8 @@
                       type="checkbox"
                       value="LONGITUDE"
                       id="col-LONGITUDE"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-LONGITUDE"
                       >LONGITUDE</label
@@ -126,6 +128,8 @@
                       type="checkbox"
                       value="ELEVATION"
                       id="col-ELEVATION"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-ELEVATION"
                       >ELEVATION</label
@@ -137,6 +141,8 @@
                       type="checkbox"
                       value="NAME"
                       id="col-NAME"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-NAME">NAME</label>
                   </div>
@@ -146,11 +152,15 @@
                       type="checkbox"
                       value="TMP"
                       id="col-TMP"
+                      checked
+                      disabled
                     />
                     <label class="form-check-label" for="col-TMP"
                       >TEMPERATURE (TMP)</label
                     >
                   </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-check">
                     <input
                       class="form-check-input"
@@ -162,8 +172,6 @@
                       >WIND (WND)</label
                     >
                   </div>
-                </div>
-                <div class="col-md-4">
                   <div class="form-check">
                     <input
                       class="form-check-input"
@@ -287,6 +295,24 @@
             progressDiv.innerHTML = "";
           }
         });
+
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        var results = regex.exec(location.search);
+        return results === null
+          ? ""
+          : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      // Set the station ID from URL parameter when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        const stationId = getUrlParameter("stationId");
+        if (stationId) {
+          document.getElementById("stationId").value = stationId;
+        }
+      });
     </script>
   </body>
 </html>

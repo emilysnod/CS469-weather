@@ -79,11 +79,32 @@ async function initializeNoaaDatabase() {
         elevation DECIMAL(10, 2),
         name VARCHAR(100),
         tmp DECIMAL(7, 2),
-        created_at TIMESTAMP DEFAULT NOW()
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(station, date)
       )
     `;
+
     await pool.query(createTableQuery);
     console.log("NOAA weather data table initialized successfully");
+
+    // Create weather_stations table
+    const createStationsTableQuery = `
+      CREATE TABLE IF NOT EXISTS bike_ped.weather_stations (
+        id SERIAL PRIMARY KEY,
+        station_id VARCHAR(50) UNIQUE,
+        latitude DECIMAL(10, 6),
+        longitude DECIMAL(10, 6),
+        station_name VARCHAR(100),
+        city VARCHAR(100),
+        state VARCHAR(100),
+        country VARCHAR(100),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+
+    await pool.query(createStationsTableQuery);
+    console.log("Weather stations table initialized successfully");
   } catch (err) {
     console.error("Error initializing NOAA database:", err);
   }
@@ -120,99 +141,6 @@ try {
 // Routes
 app.get("/", (req, res) => {
   res.render("index", { message: null });
-});
-
-// Add City Routes
-app.get("/add-city", (req, res) => {
-  res.render("add-city", {
-    message: null,
-    cityData: null,
-  });
-});
-
-app.post("/add-city", async (req, res) => {
-  try {
-    debugger; // Break point 1: When route is hit
-    const { city } = req.body;
-
-    // Visual Crossing API call
-    const apiKey = process.env.VISUAL_CROSSING_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Visual Crossing API key not found in environment variables"
-      );
-    }
-
-    debugger; // Break point 2: Before API call
-    const encodedCity = encodeURIComponent(city);
-    const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodedCity}?unitGroup=us&key=${apiKey}`;
-
-    const response = await axios.get(url);
-    debugger; // Break point 3: After API response
-    const locationData = response.data;
-
-    // Parse all parts from resolvedAddress
-    const resolvedParts = locationData.resolvedAddress
-      .split(",")
-      .map((part) => part.trim());
-
-    // Extract location information
-    // For addresses like "Portland, OR, United States"
-    const cityData = {
-      city_name: resolvedParts[0], // First part is always the city
-      state: resolvedParts.length > 1 ? resolvedParts[1] : null, // Second part is state/region if it exists
-      country: resolvedParts[resolvedParts.length - 1], // Last part is typically the country
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-      timezone: locationData.timezone,
-    };
-
-    console.log("Resolved address parts:", resolvedParts);
-    console.log("About to insert city data:", cityData);
-
-    // Insert the city into the database
-    const insertQuery = `
-      INSERT INTO bike_ped.cities 
-      (city_name, state, country, latitude, longitude, timezone)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `;
-
-    const result = await pool.query(insertQuery, [
-      cityData.city_name,
-      cityData.state,
-      cityData.country,
-      cityData.latitude,
-      cityData.longitude,
-      cityData.timezone,
-    ]);
-
-    console.log("Database insert result:", result.rows[0]);
-
-    // For display purposes, we'll still show the resolved address in the UI
-    const displayData = {
-      ...result.rows[0],
-      resolvedAddress: locationData.resolvedAddress,
-    };
-
-    // Send back the data
-    res.render("add-city", {
-      message: {
-        type: "success",
-        text: "City added successfully to the database!",
-      },
-      cityData: displayData,
-    });
-  } catch (err) {
-    console.error("Error adding city:", err);
-    res.render("add-city", {
-      message: {
-        type: "error",
-        text: `Error adding city: ${err.message}`,
-      },
-      cityData: null,
-    });
-  }
 });
 
 // Bulk Weather Import Routes
@@ -341,74 +269,64 @@ app.post("/add-weather", async (req, res) => {
 });
 
 // GET route to show the form
-app.get("/find-stations", (req, res) => {
-  res.render("find-stations", { stations: null, city: "", error: null });
-});
+// app.get("/find-stations", (req, res) => {
+//   res.render("find-stations", { stations: null, city: "", error: null });
+// });
 
-// POST route to process the form
-app.post("/find-stations", async (req, res) => {
-  const city = req.body.city;
-  try {
-    // 2. Query NOAA API for closest stations
-    const noaaToken = process.env.NOAA_API_TOKEN;
-    const south = 45.36;
-    const west = -122.825;
-    const north = 45.65;
-    const east = -122.525;
+// // POST route to process the form
+// app.post("/find-stations", async (req, res) => {
+//   const city = req.body.city;
+//   try {
+//     // 2. Query NOAA API for closest stations
+//     const noaaToken = process.env.NOAA_API_TOKEN;
+//     const south = 45.36;
+//     const west = -122.825;
+//     const north = 45.65;
+//     const east = -122.525;
 
-    // Use the params object in the axios request
-    // const noaaResp = await axios.get(
-    //   "https://www.ncei.noaa.gov/cdo-web/api/v2/stations",
-    //   {
-    //     params: {
-    //       extent: `${south},${west},${north},${east}`,
-    //       limit: 10,
-    //     },
-    //     headers: {
-    //       token: noaaToken,
-    //     },
-    //   }
-    // );
+//     // Use the params object in the axios request
+//     // const noaaResp = await axios.get(
+//     //   "https://www.ncei.noaa.gov/cdo-web/api/v2/stations",
+//     //   {
+//     //     params: {
+//     //       extent: `${south},${west},${north},${east}`,
+//     //       limit: 10,
+//     //     },
+//     //     headers: {
+//     //       token: noaaToken,
+//     //     },
+//     //   }
+//     // );
 
-    const bbox = calculateBoundingBox(lat, lon, 10);
-    console.log(bbox);
-    // Query NOAA API for stations within bounding box
-    const noaaResp = await axios.get(
-      "https://www.ncei.noaa.gov/cdo-web/api/v2/stations",
-      {
-        params: {
-          extent: `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`,
-          limit: 10,
-          sortfield: "datacoverage",
-          sortorder: "asc",
-        },
-        headers: {
-          token: noaaToken,
-        },
-      }
-    );
+//     const bbox = calculateBoundingBox(lat, lon, 10);
+//     console.log(bbox);
+//     // Query NOAA API for stations within bounding box
+//     const noaaResp = await axios.get(
+//       "https://www.ncei.noaa.gov/cdo-web/api/v2/stations",
+//       {
+//         params: {
+//           extent: `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`,
+//           limit: 10,
+//           sortfield: "datacoverage",
+//           sortorder: "asc",
+//         },
+//         headers: {
+//           token: noaaToken,
+//         },
+//       }
+//     );
 
-    const stations = noaaResp.data.results || [];
-    res.render("find-stations", { stations, city, error: null });
-  } catch (err) {
-    console.error(err);
-    res.render("find-stations", {
-      stations: null,
-      city,
-      error: "Could not find stations. Please check your city and try again.",
-    });
-  }
-});
-
-// GET route to show the form
-app.get("/week-ago-noon", (req, res) => {
-  res.render("six-hour-noaa", {
-    city: "",
-    weather: null,
-    error: null,
-    stationName: "",
-  });
-});
+//     const stations = noaaResp.data.results || [];
+//     res.render("find-stations", { stations, city, error: null });
+//   } catch (err) {
+//     console.error(err);
+//     res.render("find-stations", {
+//       stations: null,
+//       city,
+//       error: "Could not find stations. Please check your city and try again.",
+//     });
+//   }
+// });
 
 // POST route to process the form
 
@@ -497,7 +415,7 @@ app.post("/api/import-csv", async (req, res) => {
     const response = await axios.get(csvUrl);
     const csvData = response.data;
 
-    // Parse CSV data using a more robust approach
+    // Parse CSV data
     const rows = [];
     let currentRow = [];
     let currentCell = "";
@@ -555,6 +473,35 @@ app.post("/api/import-csv", async (req, res) => {
       INSERT INTO bike_ped.noaa_weather_data 
       (${fieldNames.join(", ")})
       VALUES (${placeholders.join(", ")})
+      ON CONFLICT (station, date) 
+      DO UPDATE SET 
+        ${fieldNames
+          .map((field, index) => `${field} = EXCLUDED.${field}`)
+          .join(", ")}
+    `;
+
+    // Insert or update station information
+    // const stationInsertQuery = `
+    //   INSERT INTO bike_ped.weather_stations
+    //   (station_id, latitude, longitude, station_name, city, state, country, updated_at)
+    //   VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    //   ON CONFLICT (station_id)
+    //   DO UPDATE SET
+    //     latitude = EXCLUDED.latitude,
+    //     longitude = EXCLUDED.longitude,
+    //     station_name = EXCLUDED.station_name,
+    //     city = EXCLUDED.city,
+    //     state = EXCLUDED.state,
+    //     country = EXCLUDED.country,
+    //     updated_at = NOW()
+    // `;
+
+    const stationInsertQuery = `
+      INSERT INTO bike_ped.weather_stations 
+      (station_id, latitude)
+      VALUES ($1, $2)
+      ON CONFLICT (station_id)
+      DO NOTHING
     `;
 
     let rowsImported = 0;
@@ -579,6 +526,21 @@ app.post("/api/import-csv", async (req, res) => {
 
       await pool.query(insertQuery, values);
       rowsImported++;
+
+      // If this is the first row, also update the station information
+      if (i === 1) {
+        const stationValues = [
+          values[headers.indexOf("STATION")],
+          values[headers.indexOf("LATITUDE")],
+          //   values[headers.indexOf("LONGITUDE")],
+          //   values[headers.indexOf("NAME")],
+          //   values[headers.indexOf("CITY")] || null,
+          //   values[headers.indexOf("STATE")] || null,
+          //   values[headers.indexOf("COUNTRY")] || null,
+        ];
+        console.log(stationValues);
+        await pool.query(stationInsertQuery, stationValues);
+      }
     }
 
     res.json({ success: true, rowsImported });
@@ -599,74 +561,6 @@ app.get("/import", (req, res) => {
 // Serve the visualization page
 app.get("/visualize", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "visualize-data.html"));
-});
-
-// Connection tester routes
-app.get("/connection-tester", async (req, res) => {
-  try {
-    // Mask sensitive information from connection string
-    const connectionString = process.env.BIKEPED_DATABASE_URL || "";
-    const maskedConnection = connectionString.replace(/:([^:@]+)@/, ":****@");
-    console.log(connectionString);
-
-    res.render("connection-tester", {
-      connectionInfo: maskedConnection,
-      message: null,
-      queryResult: null,
-    });
-  } catch (err) {
-    res.render("connection-tester", {
-      connectionInfo: "Error retrieving connection info",
-      message: {
-        type: "error",
-        text: err.message,
-      },
-      queryResult: null,
-    });
-  }
-});
-
-app.post("/connection-tester", async (req, res) => {
-  const testType = req.body.test;
-  const connectionString = process.env.BIKEPED_DATABASE_URL || "";
-  const maskedConnection = connectionString.replace(/:([^:@]+)@/, ":****@");
-
-  try {
-    let queryResult;
-    let query;
-
-    if (testType === "simple") {
-      query = "SELECT NOW() as current_time";
-    } else if (testType === "tables") {
-      query = `
-        SELECT table_schema, table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'bike_ped' 
-        ORDER BY table_schema, table_name
-      `;
-    }
-
-    const result = await pool.query(query);
-    queryResult = result.rows;
-
-    res.render("connection-tester", {
-      connectionInfo: maskedConnection,
-      message: {
-        type: "success",
-        text: "Database connection successful!",
-      },
-      queryResult: queryResult,
-    });
-  } catch (err) {
-    res.render("connection-tester", {
-      connectionInfo: maskedConnection,
-      message: {
-        type: "error",
-        text: `Connection error: ${err.message}`,
-      },
-      queryResult: null,
-    });
-  }
 });
 
 // Function to calculate distance between two points using Haversine formula
@@ -908,7 +802,12 @@ app.post("/find-closest-stations", async (req, res) => {
         })
       )
       .on("data", (row) => {
-        if (row.LAT && row.LON) {
+        if (
+          row.LAT &&
+          row.LON &&
+          row.USAF !== "999999" &&
+          row.WBAN !== "99999"
+        ) {
           // Calculate distance to this station
           const distance = calculateDistance(
             parseFloat(lat),
@@ -927,14 +826,14 @@ app.post("/find-closest-stations", async (req, res) => {
         // Sort by distance and get top 10
         stations.sort((a, b) => a.distance - b.distance);
         const closest = stations.slice(0, 10);
-        console.log("Closest 10 stations:");
-        closest.forEach((station, i) => {
-          console.log(
-            `${i + 1}. ${station["STATION NAME"]}: ${station.distance.toFixed(
-              2
-            )}km`
-          );
-        });
+        // console.log("Closest 10 stations:");
+        // closest.forEach((station, i) => {
+        //   console.log(
+        //     `${i + 1}. ${station["STATION NAME"]}: ${station.distance.toFixed(
+        //       2
+        //     )}km`
+        //   );
+        // });
 
         res.render("closest-stations", {
           stations: closest,
@@ -951,3 +850,130 @@ app.post("/find-closest-stations", async (req, res) => {
     });
   }
 });
+
+// Route to display station details
+app.get("/station-details", async (req, res) => {
+  const { usaf, wban } = req.query;
+
+  try {
+    // Read the ISD history file to find the station
+    const isdHistoryFile = fs.readFileSync("isd-history.csv", "utf-8");
+    const records = parse(isdHistoryFile, {
+      columns: true,
+      skip_empty_lines: true,
+    });
+
+    // Find the matching station
+    const station = records.find(
+      (record) => record.USAF === usaf && record.WBAN === wban
+    );
+
+    if (station) {
+      res.render("station-details", { station, error: null });
+    } else {
+      res.render("station-details", {
+        station: null,
+        error: "Station not found",
+      });
+    }
+  } catch (err) {
+    console.error("Error finding station details:", err);
+    res.render("station-details", {
+      station: null,
+      error: "Error retrieving station details",
+    });
+  }
+});
+
+// // Add City Routes
+// app.get("/add-city", (req, res) => {
+//   res.render("add-city", {
+//     message: null,
+//     cityData: null,
+//   });
+// });
+
+// app.post("/add-city", async (req, res) => {
+//   try {
+//     debugger; // Break point 1: When route is hit
+//     const { city } = req.body;
+
+//     // Visual Crossing API call
+//     const apiKey = process.env.VISUAL_CROSSING_API_KEY;
+//     if (!apiKey) {
+//       throw new Error(
+//         "Visual Crossing API key not found in environment variables"
+//       );
+//     }
+
+//     debugger; // Break point 2: Before API call
+//     const encodedCity = encodeURIComponent(city);
+//     const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodedCity}?unitGroup=us&key=${apiKey}`;
+
+//     const response = await axios.get(url);
+//     debugger; // Break point 3: After API response
+//     const locationData = response.data;
+
+//     // Parse all parts from resolvedAddress
+//     const resolvedParts = locationData.resolvedAddress
+//       .split(",")
+//       .map((part) => part.trim());
+
+//     // Extract location information
+//     // For addresses like "Portland, OR, United States"
+//     const cityData = {
+//       city_name: resolvedParts[0], // First part is always the city
+//       state: resolvedParts.length > 1 ? resolvedParts[1] : null, // Second part is state/region if it exists
+//       country: resolvedParts[resolvedParts.length - 1], // Last part is typically the country
+//       latitude: locationData.latitude,
+//       longitude: locationData.longitude,
+//       timezone: locationData.timezone,
+//     };
+
+//     console.log("Resolved address parts:", resolvedParts);
+//     console.log("About to insert city data:", cityData);
+
+//     // Insert the city into the database
+//     const insertQuery = `
+//       INSERT INTO bike_ped.cities
+//       (city_name, state, country, latitude, longitude, timezone)
+//       VALUES ($1, $2, $3, $4, $5, $6)
+//       RETURNING *
+//     `;
+
+//     const result = await pool.query(insertQuery, [
+//       cityData.city_name,
+//       cityData.state,
+//       cityData.country,
+//       cityData.latitude,
+//       cityData.longitude,
+//       cityData.timezone,
+//     ]);
+
+//     console.log("Database insert result:", result.rows[0]);
+
+//     // For display purposes, we'll still show the resolved address in the UI
+//     const displayData = {
+//       ...result.rows[0],
+//       resolvedAddress: locationData.resolvedAddress,
+//     };
+
+//     // Send back the data
+//     res.render("add-city", {
+//       message: {
+//         type: "success",
+//         text: "City added successfully to the database!",
+//       },
+//       cityData: displayData,
+//     });
+//   } catch (err) {
+//     console.error("Error adding city:", err);
+//     res.render("add-city", {
+//       message: {
+//         type: "error",
+//         text: `Error adding city: ${err.message}`,
+//       },
+//       cityData: null,
+//     });
+//   }
+// });
