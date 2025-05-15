@@ -11,11 +11,14 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "weather_db",
-  password: "admin", 
+  user: "user name",
+  host: "host name",
+  database: "database name",
+  password: "password",
   port: 5432,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 app.post("/weather", async (req, res) => {
@@ -24,15 +27,10 @@ app.post("/weather", async (req, res) => {
   try {
     for (const item of weatherData) {
       await pool.query(
-        "INSERT INTO weather_data (date, city, zipcode, precipitation_in) VALUES ($1, $2, $3, $4)",
-        [
-          item.date,
-          item.city,
-          item.zip,
-          item.value  
-        ]
+        "INSERT INTO weather.weather_api_data (date, city, zipcode, datatype, value, unit, temp_f) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [item.date, item.city, item.zip, item.datatype, item.value, item.unit, item.temp_f]
       );
-    }
+          }
 
     res.status(200).send("Weather data saved to DB");
   } catch (err) {

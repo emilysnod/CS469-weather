@@ -1,102 +1,97 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-const Card = ({ children }) => <div className="border p-4 rounded">{children}</div>;
-const CardContent = ({ children }) => <div>{children}</div>;
+const App = () => {
+  const [zip, setZip] = useState("20003");
+  const [weeklyForecast, setWeeklyForcast] = useState([]);
+  const [error, setError] = useState("");
+  const [locationInfo, setLocationInfo] = useState(null);
 
-const NOAA_API_URL = "https://www.ncdc.noaa.gov/cdo-web/api/v2/data";
-const TOKEN = "DSMKjBYfHJWySltevdzyvdgKGkdIFmOl";
-const ZIP_CODE = "20002"; 
-const DATA_TYPES = ["TMAX", "TMIN", "PRCP"];
-//const REPORT_DATE = "2022-03-30";
-const START_DATE = "2022-03-30T01:00:00";
-const END_DATE = "2022-03-30T02:00:00";
+  const fetchWeather = async (zip) => {
+    const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${zip}&days=7`;
 
-const WeatherReport = () => {
-  const [weatherData, setWeatherData] = useState(null);
-  const [error, setError] = useState(null);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Weather API error:", errorData);
+        throw new Error("Failed to fetch weather data.");
+      }
 
-  useEffect(() => {
-    const fetchWeatherData = async () => {
+      const data = await response.json();
+      console.log("Weather data:", data);
+
+      setWeeklyForcast(data.forecast.forecastday);
+      setLocationInfo({
+        city: data.location.name,
+        state: data.location.region,
+      });
+      setError("");
+
+      const formattedData = data.forecast.forecastday.map((day) => ({
+        date: day.date,
+        city: data.location.name,
+        zip: zip,
+        datatype: "precipitation",
+        value: day.day.totalprecip_in,
+        unit: "in",
+        temp_f: day.day.avgtemp_f,
+      }));
+
       try {
-        const dataTypeParams = DATA_TYPES.map((type) => `&datatypeid=${type}`).join("");
-        const weatherUrl = `${NOAA_API_URL}?datasetid=GHCND&locationid=ZIP:${ZIP_CODE}&startdate=${START_DATE}&enddate=${END_DATE}&limit=100${dataTypeParams}`;
-        console.log("Fetching weather data from:", weatherUrl);
-
-        const response = await fetch(weatherUrl, {
-          headers: { token: TOKEN },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch weather data");
-        }
-
-        const data = await response.json();
-        console.log("Weather Data:", data);
-
-        if (!data.results || data.results.length === 0) {
-          throw new Error("No weather data available for the selected date");
-        }
-
-        const formattedData = data.results.map((entry) => {
-          let convertedValue;
-          let unit;
-
-          if (entry.datatype === "PRCP") {
-            convertedValue = entry.value / 25.4;
-            unit = "in";
-          } else {
-            const celsius = entry.value / 10;
-            convertedValue = (celsius * 9) / 5 + 32;
-            unit = "°F";
-          }
-
-          let datatypeFormatted = entry.datatype;
-          if (datatypeFormatted === "TMAX") {
-            datatypeFormatted = "MAXTemp";
-          } else if (datatypeFormatted === "TMIN") {
-            datatypeFormatted = "MINTemp";
-          }
-
-          return {
-            date: entry.date.split("T")[0],
-            zip: ZIP_CODE,
-            datatype: datatypeFormatted,
-            value: Math.round(convertedValue * 100) / 100,
-            unit,
-          };
-        });
-
-        setWeatherData(formattedData);
-        await fetch("http://localhost:3001/weather", {
+        const postResponse = await fetch("http://localhost:3001/weather", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(formattedData),
         });
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
+  
+        if (!postResponse.ok) {
+          console.warn("POST request failed (but ignoring for dev):", await postResponse.text());
+        } else {
+          console.log("Weather data sent to server successfully");
+        }
+      } catch (postError) {
+        console.warn("Could not send to server (ignored in dev):", postError.message);
       }
-    };
-
-    fetchWeatherData();
-  }, []);
-
+    } catch (error) {
+      console.error("Fetch failed:", error);
+      setError("Failed to fetch weather data.");
+      setWeeklyForcast([]);
+    }
+  };
+  
   return (
-    <Card className="p-4">
-      <CardContent>
-        <h2 className="text-xl font-bold">Weather Report for ZIP {ZIP_CODE} on {START_DATE} to {END_DATE}</h2>
-        {error ? (
-          <pre className="text-red-500 bg-gray-200 p-2 rounded">Error: {error}</pre>
-        ) : weatherData ? (
-          <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(weatherData, null, 2)}</pre>
-        ) : (
-          <p>Loading...</p>
-        )}
-      </CardContent>
-    </Card>
+    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1>Weather Lookup</h1>
+      <input
+        type="text"
+        value={zip}
+        onChange={(e) => setZip(e.target.value)}
+        placeholder="Enter ZIP Code"
+      />
+      <button onClick={() => fetchWeather(zip)}>Get Weather</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {weeklyForecast.length > 0 && (
+        <div style={{ marginTop: "2rem" }}>
+          <h2>7-Day Forecast</h2>
+          {weeklyForecast.map((day) => (
+            <div key={day.date} style={{ marginBottom: "1rem" }}>
+              <p><strong>Date:</strong> {day.date}</p>
+              {locationInfo && (
+                <p><strong>Location:</strong> {locationInfo.city}, {locationInfo.state}</p>
+              )}
+              <p><strong>Precipitation:</strong> {day.day.totalprecip_in} in</p>
+              <p><strong>Avg Temp:</strong> {day.day.avgtemp_f} °F</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default WeatherReport;
+export default App;
