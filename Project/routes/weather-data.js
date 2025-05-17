@@ -10,18 +10,14 @@ const pool = new Pool({
   },
 });
 
-router.get("/weather-data", async (req, res) => {
-  const startYear = req.query.startYear;
-  const endYear = req.query.endYear;
-
+async function getDailyTemperatureData(startYear, endYear) {
   if (!startYear || !endYear) {
-    return res
-      .status(400)
-      .json({ error: "Start year and end year are required" });
+    throw new Error("Start year and end year are required");
   }
 
-  // Sample data by taking one reading per day to reduce data points
-  // Filter out temperatures above 80°C (176°F) and below -50°C (-58°F)
+  const startDate = `${startYear}-01-01`;
+  const endDate = `${parseInt(endYear) + 1}-01-01`; // Add 1 to include the entire end year
+
   const query = `
     WITH valid_temps AS (
       SELECT date, tmp
@@ -45,19 +41,39 @@ router.get("/weather-data", async (req, res) => {
     FROM daily_temps
   `;
 
-  const startDate = `${startYear}-01-01`;
-  const endDate = `${parseInt(endYear) + 1}-01-01`; // Add 1 to include the entire end year
-
   try {
-    console.log("Executing query with dates:", { startDate, endDate });
     const result = await pool.query(query, [startDate, endDate]);
-    console.log("Query results count:", result.rows.length);
-    console.log("Sample of results:", result.rows.slice(0, 3));
+    return result.rows;
+  } catch (error) {
+    throw new Error(`Database error: ${error.message}`);
+  }
+}
 
-    res.json(result.rows);
+router.get("/weather-data", async (req, res) => {
+  try {
+    const startYear = req.query.startYear;
+    const endYear = req.query.endYear;
+
+    const data = await getDailyTemperatureData(startYear, endYear);
+    console.log("Query results count:", data.length);
+    console.log("Sample of results:", data.slice(0, 3));
+
+    res.json(data);
   } catch (error) {
     console.error("Database error:", error);
-    res.status(500).json({ error: "Failed to fetch weather data" });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/daily-temperatures", async (req, res) => {
+  try {
+    const startYear = req.query.startYear;
+    const endYear = req.query.endYear;
+
+    const data = await getDailyTemperatureData(startYear, endYear);
+    res.json(data);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 
