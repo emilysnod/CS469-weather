@@ -71,8 +71,6 @@
             const stationID = stationData["USAF"] + stationData["WBAN"];
           console.log("Station ID:", stationID);
           // Combine USAF and WBAN into a single station ID
-          // const stationId = stationData.USAF + stationData.WBAN;
-          // console.log("Combined station ID:", stationId);
 
           // Redirect to import-csv page with the station ID
           const url = `/import-csv?stationId=${stationID}`;

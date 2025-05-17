@@ -25,7 +25,7 @@ router.get("/weather-data", async (req, res) => {
   const query = `
     WITH valid_temps AS (
       SELECT date, tmp
-      FROM bike_ped.noaa_weather_data
+      FROM bike_ped.ABH_weather_data
       WHERE tmp IS NOT NULL
         AND (tmp / 10.0) <= 176  -- Filter out temps above 80°C (176°F)
         AND (tmp / 10.0) >= -58  -- Filter out temps below -50°C (-58°F)
