@@ -18,8 +18,8 @@ url = "https://archive-api.open-meteo.com/v1/archive"
 params = {
 	"latitude": 45.6387,
 	"longitude": -122.6615,
-	"start_date": "2025-03-29",
-	"end_date": "2025-04-15",
+	"start_date": "2025-04-22",
+	"end_date": "2025-04-29",
 	"hourly": ["temperature_2m", "precipitation"],
 	"timezone": "America/Los_Angeles",
 	"temperature_unit": "fahrenheit",
@@ -55,59 +55,74 @@ print(hourly_dataframe)
 #This will write the DataFrame to a JSON file.
 hourly_dataframe.to_json("weather_dataVancouver.json", orient="records", date_format="iso")
 
-#The following section of code was copy from here: https://www.sqliz.com/posts/python-basic-postgresql/
-#It has been modified for my/our purpoes.
+isNotAnswer = True
+sentToDataBase = False
 
-#Inputs just so no one has my login information.
-username = input("Enter username: ") 
-password = input("Enter password: ")
+while (isNotAnswer):
+	answer = input("Do you wish to sent this data to the database. (Y)es/(N)o: ")
+	if (answer[0] == "Y") or (answer[0] == "y"):
+		isNotAnswer = False
+		sentToDataBase = True
+	elif (answer[0] == "N") or (answer[0] == "n"):
+		isNotAnswer = False
 
-#Database configuration
-db_config = {
-	"dbname": "bikeped_capstone",
-    "user": username,
-	"password": password,
-	"host": "portaldb.its.pdx.edu"
-}
+if sentToDataBase:
+	#The following section of code was copy from here: https://www.sqliz.com/posts/python-basic-postgresql/
+	#It has been modified for my/our purpoes.
 
-try:
-	connection = psycopg2.connect(**db_config)
+	#Inputs just so no one has my login information.
+	username = input("Enter username: ") 
+	password = input("Enter password: ")
 
-	if connection:
-		print("Connected to database")
-		cursor = connection.cursor()
+	#Database configuration
+	db_config = {
+		"dbname": "bikeped_capstone",
+		"user": username,
+		"password": password,
+		"host": "portaldb.its.pdx.edu"
+	}
 
-		TableName = "weather.Weather_Data_Vancouver_WA"
+	try:
+		connection = psycopg2.connect(**db_config)
+
+		if connection:
+			print("Connected to database")
+			cursor = connection.cursor()
+
+			TableName = "weather.Weather_Data_Vancouver_WA"
+			
+			#The Table should be already created, but it is here to make it easier to make a new Table or just in case the table gets deleted.
+			create_table_query = """CREATE TABLE IF NOT EXISTS """ + TableName + """ (
+				id SERIAL PRIMARY KEY,
+				time timestamp,
+				temperature FLOAT(32),
+				precipitation FLOAT(32)
+			)"""
+
+			cursor.execute(create_table_query)
+			print("Table created successfully") #Should probably figure out how (if possible) if the previous line actucally created the table or not.
+
+			for i in range(len(hourly_data["temperature_2m"])):
+				insert_query = "INSERT INTO " + TableName + " (time, temperature, precipitation) VALUES (%s, %s, %s)"
+				time = hourly_data["date"][i]
+				temp = float(hourly_data["temperature_2m"][i])
+				prep = float(hourly_data["precipitation"][i])
+				data = (time, temp , prep)
+				cursor.execute(insert_query, data)
+				
+			connection.commit()
+			print("Data inserted successfully")
 		
-		#The Table should be already created, but it is here to make it easier to make a new Table or just in case the table gets deleted.
-		create_table_query = """CREATE TABLE IF NOT EXISTS """ + TableName + """ (
-			id SERIAL PRIMARY KEY,
-            time timestamp,
-			temperature FLOAT(32),
-			precipitation FLOAT(32)
-		)"""
+	except psycopg2.Error as e:
+		print(f"Error: {e}")
 
-		cursor.execute(create_table_query)
-		print("Table created successfully") #Should probably figure out how (if possible) if the previous line actucally created the table or not.
+	finally:
+		if 'connection' in locals():
+			connection.close()
+			print("Connection closed")
 
-		for i in range(len(hourly_data["temperature_2m"])):
-			insert_query = "INSERT INTO " + TableName + " (time, temperature, precipitation) VALUES (%s, %s, %s)"
-			time = hourly_data["date"][i]
-			temp = float(hourly_data["temperature_2m"][i])
-			prep = float(hourly_data["precipitation"][i])
-			data = (time, temp , prep)
-			cursor.execute(insert_query, data)
-            
-		connection.commit()
-		print("Data inserted successfully")
-    
-except psycopg2.Error as e:
-    print(f"Error: {e}")
 
-finally:
-    if 'connection' in locals():
-        connection.close()
-        print("Connection closed")
+print("\nend of progarm")
 
 
 '''
