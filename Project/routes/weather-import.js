@@ -5,66 +5,45 @@ const pool = require("../config/database");
 const path = require("path");
 
 // Route to display the form to add weather data
-router.get("/add-weather", (req, res) => {
-  res.render("add-weather", {
-    message: null,
-    data: null,
-  });
-});
-
-// Route to handle the form submission
-router.post("/add-weather", async (req, res) => {
-  try {
-    // Get values from the form
-    const {
-      station_id,
-      temp,
-      precip,
-      w_speed,
-      w_direction,
-      visibility,
-      timestamp,
-    } = req.body;
-
-    const query = `
-      INSERT INTO bike_ped.weather_data
-      (station_id, record_time, "temp", precip, w_speed, w_direction, visibility, "timestamp")
-      VALUES($1, NOW(), $2, $3, $4, $5, $6, $7)
-    `;
-
-    await pool.query(query, [
-      station_id,
-      temp,
-      precip,
-      w_speed,
-      w_direction,
-      visibility,
-      timestamp,
-    ]);
-
-    res.render("add-weather", {
-      message: {
-        type: "success",
-        text: "Weather data added successfully!",
-      },
-      data: req.body,
-    });
-  } catch (err) {
-    console.error("Error executing query", err.stack);
-    res.render("add-weather", {
-      message: {
-        type: "error",
-        text: `Error adding weather data: ${err.message}`,
-      },
-      data: req.body,
-    });
-  }
-});
 
 // NOAA CSV Import Routes
 router.get("/import-csv", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "views", "import-csv.html"));
 });
+
+// Function to get location details from coordinates using Nominatim
+async function getLocationFromCoordinates(latitude, longitude) {
+  try {
+    const response = await axios.get(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&layer=address`,
+      {
+        headers: {
+          "User-Agent": "WeatherStationImport/1.0",
+        },
+      }
+    );
+
+    const data = response.data;
+    console.log("Full Nominatim response:", JSON.stringify(data, null, 2));
+    console.log("Address details:", JSON.stringify(data.address, null, 2));
+
+    const address = data.address;
+    const isoCode = address["ISO3166-2-lvl4"]
+      ? address["ISO3166-2-lvl4"].split("-")[1]
+      : null;
+
+    return {
+      city: address.city || address.town || address.village || null,
+      state: isoCode || address.state_code || null,
+      country: data.address.country_code
+        ? data.address.country_code.toUpperCase()
+        : null,
+    };
+  } catch (error) {
+    console.error("Error in reverse geocoding:", error.message);
+    return { city: null, state: null, country: null };
+  }
+}
 
 router.post("/api/import-csv", async (req, res) => {
   try {
@@ -114,6 +93,22 @@ router.post("/api/import-csv", async (req, res) => {
 
     const headers = rows[0];
 
+    // Always include NAME in the columns if it exists in the CSV
+    if (headers.includes("NAME") && !columns.includes("NAME")) {
+      columns.push("NAME");
+    }
+    // Always include LATITUDE and LONGITUDE if they exist in the CSV
+    if (headers.includes("LATITUDE") && !columns.includes("LATITUDE")) {
+      columns.push("LATITUDE");
+    }
+    if (headers.includes("LONGITUDE") && !columns.includes("LONGITUDE")) {
+      columns.push("LONGITUDE");
+    }
+    // Always include AA1 if it exists in the CSV
+    if (headers.includes("AA1") && !columns.includes("AA1")) {
+      columns.push("AA1");
+    }
+
     // Validate that all requested columns exist in the CSV
     const missingColumns = columns.filter((col) => !headers.includes(col));
     if (missingColumns.length > 0) {
@@ -125,8 +120,11 @@ router.post("/api/import-csv", async (req, res) => {
     }
 
     // Build the insert query dynamically based on selected columns
-    const fieldNames = columns.map((col) => col.toLowerCase());
-    const placeholders = columns.map((_, index) => `$${index + 1}`);
+    // Exclude NAME, LATITUDE, and LONGITUDE from weather_data table
+    const fieldNames = columns
+      .filter((col) => !["NAME", "LATITUDE", "LONGITUDE"].includes(col))
+      .map((col) => (col === "AA1" ? "precip" : col.toLowerCase()));
+    const placeholders = fieldNames.map((_, index) => `$${index + 1}`);
 
     const insertQuery = `
       INSERT INTO bike_ped.ABH_weather_data 
@@ -141,10 +139,16 @@ router.post("/api/import-csv", async (req, res) => {
 
     const stationInsertQuery = `
       INSERT INTO bike_ped.ABH_weather_stations 
-      (station_id, latitude)
-      VALUES ($1, $2)
+      (station_id, latitude, longitude, station_name, city, state, country)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (station_id)
-      DO NOTHING
+      DO UPDATE SET 
+        latitude = EXCLUDED.latitude,
+        longitude = EXCLUDED.longitude,
+        station_name = EXCLUDED.station_name,
+        city = EXCLUDED.city,
+        state = EXCLUDED.state,
+        country = EXCLUDED.country
     `;
 
     let rowsImported = 0;
@@ -155,28 +159,50 @@ router.post("/api/import-csv", async (req, res) => {
     // Process each row (skip header)
     for (let i = 1; i <= maxRows; i++) {
       const row = rows[i];
-      const values = columns.map((col) => {
-        const value = row[headers.indexOf(col)];
-        if (col === "DATE") {
-          // NOAA date format is ISO 8601: "YYYY-MM-DDTHH:mm:ss"
-          // Remove quotes if present and convert to PostgreSQL timestamp format
-          return value.replace(/^"|"$/g, "").replace("T", " ");
-        }
-        // Try to parse numbers, but keep as string if not a valid number
-        const numValue = parseFloat(value);
-        return isNaN(numValue) ? value : numValue;
-      });
+      const values = columns
+        .filter((col) => !["NAME", "LATITUDE", "LONGITUDE"].includes(col))
+        .map((col) => {
+          const value = row[headers.indexOf(col)];
+          if (col === "DATE") {
+            // NOAA date format is ISO 8601: "YYYY-MM-DDTHH:mm:ss"
+            // Remove quotes if present and convert to PostgreSQL timestamp format
+            return value.replace(/^"|"$/g, "").replace("T", " ");
+          }
+          if (col === "AA1") {
+            // Store raw AA1 value
+            return value;
+          }
+          // Try to parse numbers, but keep as string if not a valid number
+          const numValue = parseFloat(value);
+          return isNaN(numValue) ? value : numValue;
+        });
 
       await pool.query(insertQuery, values);
       rowsImported++;
 
       // If this is the first row, also update the station information
       if (i === 1) {
+        const latitude = parseFloat(row[headers.indexOf("LATITUDE")]);
+        const longitude = parseFloat(row[headers.indexOf("LONGITUDE")]);
+
+        // Get location details from coordinates
+        const locationDetails = await getLocationFromCoordinates(
+          latitude,
+          longitude
+        );
+        console.log("Location details from coordinates:", locationDetails);
+
         const stationValues = [
           values[headers.indexOf("STATION")],
-          values[headers.indexOf("LATITUDE")],
+          latitude,
+          longitude,
+          row[headers.indexOf("NAME")], // Keep original station name
+          locationDetails.city,
+          locationDetails.state,
+          locationDetails.country,
         ];
-        console.log(stationValues);
+
+        console.log("Final station values:", stationValues);
         await pool.query(stationInsertQuery, stationValues);
       }
     }

@@ -5,7 +5,6 @@ const {
   calculateDistance,
   calculateBoundingBox,
 } = require("../utils/geo-utils");
-const { getStationInfo } = require("../utils/station-utils");
 const pool = require("../config/database");
 const fs = require("fs");
 const { parse } = require("csv-parse");

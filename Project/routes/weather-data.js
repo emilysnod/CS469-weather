@@ -65,16 +65,4 @@ router.get("/weather-data", async (req, res) => {
   }
 });
 
-router.get("/daily-temperatures", async (req, res) => {
-  try {
-    const startYear = req.query.startYear;
-    const endYear = req.query.endYear;
-
-    const data = await getDailyTemperatureData(startYear, endYear);
-    res.json(data);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
 module.exports = router;

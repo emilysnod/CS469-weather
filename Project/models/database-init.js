@@ -30,17 +30,19 @@ async function initializeNoaaDatabase() {
         id SERIAL PRIMARY KEY,
         station VARCHAR(50),
         date TIMESTAMP,
-        latitude DECIMAL(10, 6),
-        longitude DECIMAL(10, 6),
-        elevation DECIMAL(10, 2),
-        name VARCHAR(100),
         tmp DECIMAL(7, 2),
+        precip VARCHAR(20),
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(station, date)
       )
     `;
 
     await pool.query(createTableQuery);
+
+    // Change the owner of the table to bikeped_capstone, may
+    await pool.query(
+      "ALTER TABLE bike_ped.ABH_weather_data OWNER TO bikeped_capstone"
+    );
     console.log("NOAA weather data table initialized successfully");
 
     // Create weather_stations table
@@ -60,6 +62,9 @@ async function initializeNoaaDatabase() {
     `;
 
     await pool.query(createStationsTableQuery);
+    await pool.query(
+      "ALTER TABLE bike_ped.ABH_weather_stations OWNER TO bikeped_capstone"
+    );
     console.log("Weather stations table initialized successfully");
   } catch (err) {
     console.error("Error initializing NOAA database:", err);
