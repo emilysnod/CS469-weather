@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Weather Data - BikePed Database</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .flash-message {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #dff0d8;
+        color: #3c763d;
+        border: 1px solid #d6e9c6;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ef9a9a;
+      }
+      .info-box {
+        background-color: #e3f2fd;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Add Weather Data</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div class="flash-message {{ category }}">{{ message }}</div>
+    {% endfor %} {% endif %} {% endwith %}
+
+    <div class="info-box">
+      <h3>Current Values to be Inserted:</h3>
+      <ul>
+        <li>station_id: 'A'</li>
+        <li>record_time: NOW()</li>
+        <li>temp: 'C'</li>
+        <li>precip: 'D'</li>
+        <li>w_speed: 'E'</li>
+        <li>w_direction: 'F'</li>
+        <li>visibility: 'G'</li>
+        <li>timestamp: '2024-03-21 14:30:00'</li>
+      </ul>
+    </div>
+
+    <form method="POST" action="{{ url_for('add_weather') }}">
+      <button type="submit">Insert Weather Data</button>
+    </form>
+
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+  </body>
+</html>

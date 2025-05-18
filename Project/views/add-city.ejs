@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add City - Weather Database</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .message {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .success {
+        background-color: #dff0d8;
+        color: #3c763d;
+        border: 1px solid #d6e9c6;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ef9a9a;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .city-data {
+        background-color: #f5f5f5;
+        padding: 20px;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+      .city-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+      .info-item {
+        background-color: white;
+        padding: 15px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .info-item h4 {
+        margin: 0 0 10px 0;
+        color: #2196f3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Add City to Database</h1>
+
+    <% if (message) { %>
+    <div class="message <%= message.type %>"><%= message.text %></div>
+    <% } %>
+
+    <form method="POST" action="/add-city">
+      <div class="form-group">
+        <label for="city"
+          >Enter City (e.g., "Portland, OR" or "London, UK"):</label
+        >
+        <input
+          type="text"
+          id="city"
+          name="city"
+          required
+          placeholder="City, State/Country"
+        />
+      </div>
+      <button type="submit">Add City</button>
+    </form>
+
+    <% if (cityData) { %>
+    <div class="city-data">
+      <h3>City Information</h3>
+      <div class="city-info">
+        <div class="info-item">
+          <h4>Location</h4>
+          <p>City: <%= cityData.city_name %></p>
+          <% if (cityData.state) { %>
+          <p>State: <%= cityData.state %></p>
+          <% } %>
+          <p>Country: <%= cityData.country %></p>
+        </div>
+        <div class="info-item">
+          <h4>Coordinates</h4>
+          <p>Latitude: <%= cityData.latitude %></p>
+          <p>Longitude: <%= cityData.longitude %></p>
+        </div>
+        <div class="info-item">
+          <h4>Time Zone</h4>
+          <p><%= cityData.timezone %></p>
+        </div>
+        <div class="info-item">
+          <h4>Resolved Address</h4>
+          <p><%= cityData.resolvedAddress %></p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <p style="margin-top: 20px">
+      <a href="/" style="color: #2196f3; text-decoration: none">Back to Home</a>
+    </p>
+  </body>
+</html>

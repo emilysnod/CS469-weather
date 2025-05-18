@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Find NOAA Weather Stations</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .search-form {
+        margin: 20px 0;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+      }
+      .search-form input[type="text"] {
+        padding: 8px;
+        width: 300px;
+        margin-right: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .search-form button {
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .search-form button:hover {
+        background-color: #0056b3;
+      }
+      .station-card {
+        margin: 10px 0;
+        padding: 15px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .station-card h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .station-meta {
+        color: #666;
+        font-size: 0.9em;
+        margin: 5px 0;
+      }
+      .error-message {
+        padding: 10px;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        color: #721c24;
+        margin: 10px 0;
+      }
+      .success-message {
+        padding: 10px;
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        color: #155724;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Find NOAA Weather Stations</h1>
+
+    <div class="search-form">
+      <form action="/find-noaa-stations" method="POST">
+        <input
+          type="text"
+          name="city"
+          placeholder="Enter city name (e.g., Portland, OR)"
+          value="<%= locals.city || '' %>"
+          required
+        />
+        <button type="submit">Search Stations</button>
+      </form>
+    </div>
+
+    <% if (locals.error) { %>
+    <div class="error-message"><%= error %></div>
+    <% } %> <% if (locals.stations && stations.length > 0) { %>
+    <div class="success-message">
+      Found <%= stations.length %> stations near <%= city %>
+    </div>
+
+    <% stations.forEach(function(station) { %>
+    <div class="station-card">
+      <h3><%= station.name %></h3>
+      <div class="station-meta">
+        <p><strong>GHCND ID:</strong> <%= station.id %></p>
+        <p><strong>WBAN Number:</strong> <%= station.wban %></p>
+        <p><strong>ICAO Code:</strong> <%= station.icao %></p>
+        <p><strong>WMO ID:</strong> <%= station.wmoId %></p>
+        <p>
+          <strong>Location:</strong> <%= station.latitude %>°, <%=
+          station.longitude %>°
+        </p>
+        <p><strong>Elevation:</strong> <%= station.elevation %> meters</p>
+        <% if (station.distance) { %>
+        <p>
+          <strong>Distance:</strong> <%= station.distance.toFixed(2) %> km from
+          city center
+        </p>
+        <% } %>
+        <p>
+          <strong>Data Coverage:</strong> <%= (station.datacoverage *
+          100).toFixed(1) %>%
+        </p>
+      </div>
+    </div>
+    <% }); %> <% } else if (locals.stations) { %>
+    <div class="error-message">No stations found near <%= city %></div>
+    <% } %>
+  </body>
+</html>

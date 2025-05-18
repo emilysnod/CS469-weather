@@ -1,0 +1,88 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+  <h2>Closest Weather Stations to <%= city %></h2>
+
+  <% if (error) { %>
+  <div class="alert alert-danger" role="alert"><%= error %></div>
+  <% } %> <% if (stations && stations.length > 0) { %>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>USAF</th>
+          <th>WBAN</th>
+          <th>Station Name</th>
+          <th>Country</th>
+          <th>State</th>
+          <th>Distance (km)</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Elevation (m)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% stations.forEach(station => { %>
+        <tr
+          class="clickable-row"
+          data-station='<%= JSON.stringify(station).replace(/'/g, "\\'") %>'
+          style="cursor: pointer"
+        >
+          <td><%= station.USAF %></td>
+          <td><%= station.WBAN %></td>
+          <td><%= station['STATION NAME'] %></td>
+          <td><%= station.CTRY %></td>
+          <td><%= station.STATE %></td>
+          <td><%= station.distance.toFixed(2) %></td>
+          <td><%= station.LAT %></td>
+          <td><%= station.LON %></td>
+          <td><%= station.ELEV %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <% } else if (!error) { %>
+  <div class="alert alert-info" role="alert">
+    No stations found near this location.
+  </div>
+  <% } %>
+
+  <div class="mt-4">
+    <a href="/" class="btn btn-primary">Search Another Location</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM Content Loaded");
+    const rows = document.querySelectorAll(".clickable-row");
+    console.log("Found clickable rows:", rows.length);
+
+    rows.forEach((row) => {
+      row.addEventListener("click", function (e) {
+        try {
+          console.log("row is: ", row);
+          const stationData = JSON.parse(this.dataset.station);
+          console.log("Station name:", stationData["STATION NAME"]);
+          console.log("Station country:", stationData["CTRY"]);
+            <!-- const stationID = stationData["STATION NAME"]  -->
+
+            const stationID = stationData["USAF"] + stationData["WBAN"];
+          console.log("Station ID:", stationID);
+          // Combine USAF and WBAN into a single station ID
+
+          // Redirect to import-csv page with the station ID
+          const url = `/import-csv?stationId=${stationID}`;
+          console.log("Redirecting to:", url);
+          window.location.href = url;
+        } catch (error) {
+          console.error("Error handling click:", error);
+          alert("Error processing station data. Please try again.");
+        }
+      });
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,81 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+  <% if (error) { %>
+  <div class="alert alert-danger" role="alert"><%= error %></div>
+  <% } else if (station) { %>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="mb-0"><%= station['STATION NAME'] %></h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <h4>Station Information</h4>
+          <table class="table">
+            <tr>
+              <th>USAF ID:</th>
+              <td><%= station.USAF %></td>
+            </tr>
+            <tr>
+              <th>WBAN ID:</th>
+              <td><%= station.WBAN %></td>
+            </tr>
+            <tr>
+              <th>Country:</th>
+              <td><%= station.CTRY %></td>
+            </tr>
+            <tr>
+              <th>State:</th>
+              <td><%= station.STATE %></td>
+            </tr>
+            <tr>
+              <th>Distance:</th>
+              <td><%= station.distance.toFixed(2) %> km</td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <h4>Location Details</h4>
+          <table class="table">
+            <tr>
+              <th>Latitude:</th>
+              <td><%= station.LAT %>°</td>
+            </tr>
+            <tr>
+              <th>Longitude:</th>
+              <td><%= station.LON %>°</td>
+            </tr>
+            <tr>
+              <th>Elevation:</th>
+              <td><%= station.ELEV %> meters</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <h4>Additional Information</h4>
+        <p>
+          This weather station is part of the NOAA Integrated Surface Database
+          (ISD) network. The station provides meteorological data that can be
+          used for various weather and climate analyses.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <a href="javascript:history.back()" class="btn btn-secondary"
+      >Back to Stations List</a
+    >
+  </div>
+  <% } else { %>
+  <div class="alert alert-warning" role="alert">Station not found.</div>
+  <div class="mt-4">
+    <a href="/" class="btn btn-primary">Return to Home</a>
+  </div>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>
