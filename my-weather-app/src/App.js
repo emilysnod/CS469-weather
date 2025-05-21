@@ -8,7 +8,7 @@ const App = () => {
 
   const fetchWeather = async (zip) => {
     const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
-    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${zip}&days=7`;
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${zip}&days=30`;
 
     try {
       const response = await fetch(url);
