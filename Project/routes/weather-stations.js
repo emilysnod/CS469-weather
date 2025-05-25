@@ -106,6 +106,8 @@ router.get("/station-details", async (req, res) => {
 // Route to find closest stations
 router.post("/find-closest-stations", async (req, res) => {
   const city = req.body.city;
+  const radius = parseFloat(req.body.radius) || 10; // Default to 10 miles if not specified
+
   try {
     // 1. Geocode the city using OpenStreetMap
     const geoResponse = await axios.get(
@@ -128,6 +130,9 @@ router.post("/find-closest-stations", async (req, res) => {
 
     const { lat, lon } = geoResponse.data[0];
 
+    // Calculate bounding box based on radius
+    const bbox = calculateBoundingBox(lat, lon, radius);
+
     // 2. Read and process the ISD history file
     const stations = [];
     const fileStream = fs
@@ -145,12 +150,25 @@ router.post("/find-closest-stations", async (req, res) => {
           row.USAF !== "999999" &&
           row.WBAN !== "99999"
         ) {
+          const stationLat = parseFloat(row.LAT);
+          const stationLon = parseFloat(row.LON);
+
+          // Check if station is within bounding box
+          if (
+            stationLat > bbox.north ||
+            stationLat < bbox.south ||
+            stationLon > bbox.east ||
+            stationLon < bbox.west
+          ) {
+            return; // Skip stations outside bounding box
+          }
+
           // Calculate distance to this station
           const distance = calculateDistance(
             parseFloat(lat),
             parseFloat(lon),
-            parseFloat(row.LAT),
-            parseFloat(row.LON)
+            stationLat,
+            stationLon
           );
 
           stations.push({
@@ -167,6 +185,7 @@ router.post("/find-closest-stations", async (req, res) => {
         res.render("closest-stations", {
           stations: closest,
           city,
+          radius,
           error: null,
         });
       });
@@ -175,6 +194,7 @@ router.post("/find-closest-stations", async (req, res) => {
     res.render("closest-stations", {
       stations: null,
       city,
+      radius,
       error: `Error finding stations: ${err.message}`,
     });
   }

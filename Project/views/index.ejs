@@ -35,6 +35,22 @@
                 required
               />
             </div>
+            <div class="form-group mt-3">
+              <label for="radius">Search Radius (miles):</label>
+              <input
+                type="number"
+                class="form-control"
+                id="radius"
+                name="radius"
+                min="1"
+                max="100"
+                value="10"
+                placeholder="Enter radius in miles"
+              />
+              <small class="form-text text-muted"
+                >Default is 10 miles if not specified</small
+              >
+            </div>
             <button type="submit" class="btn btn-primary mt-3">
               Find Stations
             </button>
