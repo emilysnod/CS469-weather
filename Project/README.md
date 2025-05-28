@@ -1,100 +1,163 @@
-# BikePed Database Interface
+# BikePed Weather Data Management System
 
-A Node.js application to connect to and interact with the BikePed PostgreSQL database.
+This is a tool for collecting weather data to be used in conjunction with the wealth of
+other data that BikePed Portal collects.
 
-## Features
+There are two main components to this project, as well as some ancillary tools that were used for testing and may be useful in the future.
 
-- Direct PostgreSQL database connection
-- Easy data insertion via web interface
-- Modern JavaScript stack (Node.js, Express, EJS)
-- Simple and intuitive UI
+## Components
 
-## Installation
+- **Front End**
+    - This is intended to be used by a BikePed admin, not the general users of BikePed Portal. It is only necessary to use this frontend when trackers are being added to a completely new area, or when the current set of tracked weather is not precise enough.
+        - Scenario 1: BikePed gets trackers in a city where it has never had trackers before. A BikePed admin would want to use the front end to add that city and its historical data as a location whose weather data to track.
+        - Scenario 2: Since BikePed's Trackers tend to be clustered to certain cities and sometimes their suburbs, tracking the data for a station in that city tends to be sufficient. However, as new trackers are added and perhaps new clusters are formed, it may make sense to track the weather for a new station to get better data for that new cluster. This front end can be used to do that as well.
+- **Back End/Scheduled Updates**
+    - The functionality responsible for fetching the data when an admin chooses to add a station to track can also be scheduled, ensuring that the BikePed weather database is always up to date for the tracked stations.
+    When the schedule task is run, it gets the latest weather data for all of the stations in the Weather_Stations table.
+- **Ancillary tools**
+    - NCEI Weather Data Downloader: This is a python script to download all of the CSV files that store hourly data that the NCEI stores. This was developed as a precaution to get the NCEI data backed up in case it stopped being publicly available for any reason at some point in the future
+    - plotweather.py: This was developed to demonstrate plotting data from the NCEI CSV files. It currently hard codes the name of the file and specific dates to plot from that file.
 
-1. Make sure you have Node.js installed (version 14.x or higher recommended)
 
-2. Clone this repository
+## Getting Started
 
-```
-git clone <repository-url>
-cd bikeped-dashboard
-```
+### Prerequisites
 
-3. Install dependencies
+- Node.js (version 14.x or higher)
+- PostgreSQL database
+- Python 3.x (for data visualization scripts)
+    - Only necessary for the data plotting script
 
-```
-npm install
-```
+### Installation
 
-4. Set up your database connection by creating a `.env` file with your PostgreSQL connection:
+1. **Clone the repository**
 
-```
-BIKEPED_DATABASE_URL=postgresql://username:password@host:port/database
-```
+   ```bash
+   git clone <repository-url>
+   cd project
+   ```
 
-## Running the Application
+2. **Install dependencies**
 
-Start the application:
+   ```bash
+   npm install
+   ```
 
-```
-npm start
-```
+3. **Configure environment variables**
+   Create a `.env` file in the root directory with the following variables:
 
-For development with auto-restart:
+   ```
+   BIKEPED_DATABASE_URL=postgresql://username:password@host:port/database
+   NODE_ENV=development
+   PORT=3000
+   ```
 
-```
+4. **Set up Python dependencies** (for visualization)
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## 🏃‍♂️ Running the Application
+
+### Development Mode
+
+```bash
 npm run dev
 ```
 
-Then open your browser to http://localhost:3000
+### Production Mode
 
-## Available Endpoints
+```bash
+npm start
+```
 
-- `/` - Home page with links to database operations
-- `/add-weather` - Insert weather data into the database
+### Debug Mode
+
+```bash
+npm run debug
+```
+
+The application will be available at `http://localhost:3000`
+
+## 📁 Project Structure
+
+```
+Project/
+├── app.js              # Main application entry point
+├── routes/             # API route handlers
+├── views/             # EJS templates
+├── public/            # Static assets
+├── models/            # Database models
+├── utils/             # Utility functions
+├── cron/              # Scheduled tasks
+├── config/            # Configuration files
+└── templates/         # Additional templates
+```
+
+## 🔧 Available Endpoints
+
+- `/` - Dashboard home
+- `/add-weather` - Weather data input interface
+- `/visualize` - Data visualization tools
+- `/api/weather` - Weather data API endpoints
 
 ## Technology Stack
 
-- **Node.js** - JavaScript runtime
-- **Express** - Web framework
-- **EJS** - Templating engine
-- **pg** - PostgreSQL client
+- **Backend**
 
-## Project Structure
+  - Node.js & Express
+  - PostgreSQL
+  - node-cron for scheduled tasks
 
-- `app.js` - Main application file
-- `views/` - EJS templates
-- `.env` - Environment variables (database configuration)
-- `package.json` - Project dependencies
+- **Frontend**
 
-## Troubleshooting
+  - EJS templating
+  - Modern JavaScript
+  - Data visualization libraries
+
+- **Data Processing**
+  - Python scripts for data analysis
+  - CSV parsing utilities
+  - Weather data processing tools
+
+## 🔍 Troubleshooting
 
 ### Database Connection Issues
 
-If you see an error like:
+If you encounter database connection errors:
 
-```
-Error adding weather data: no pg_hba.conf entry for host "x.x.x.x", user "username", database "dbname", SSL off
-```
+1. **SSL Configuration**
 
-Try these solutions:
+   ```env
+   BIKEPED_DATABASE_URL=postgresql://username:password@host:port/database?ssl=true
+   ```
 
-1. **Enable SSL**:
+2. **Network Access**
 
-   - Update your .env file to include SSL parameter:
-     ```
-     BIKEPED_DATABASE_URL=postgresql://username:password@host:port/database?ssl=true
-     ```
-   - Make sure the app.js file is configured to handle SSL connections
+   - Ensure VPN connection if required
+   - Verify IP whitelist in database configuration
+   - Check firewall settings
 
-2. **Use a VPN**:
-   - If connecting to a university/corporate database, connect to their VPN first
-3. **Contact Database Administrator**:
-   - Provide them with your IP address to add to the pg_hba.conf file
-   - Ask them to grant you the proper access credentials
-4. **Try psql command line**:
-   - Test your connection using the psql command line tool:
-     ```
-     psql "postgresql://username:password@host:port/database?ssl=true"
-     ```
-   - This can help verify if the issue is with your application or the database itself
+3. **Connection Testing**
+   ```bash
+   psql "postgresql://username:password@host:port/database?ssl=true"
+   ```
+
+### Common Issues
+
+1. **Module not found errors**
+
+   - Run `npm install` to ensure all dependencies are installed
+   - Check Node.js version compatibility
+
+2. **Database migration issues**
+   - Verify database schema matches application requirements
+   - Check database user permissions
+
+## 📝 License
+
+???
+
+## 📧 Contact
+
+???

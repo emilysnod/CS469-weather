@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Weather stations management routes for the BikePed Weather Data Management System
+ * @requires express
+ * @requires axios
+ * @requires ../utils/geo-utils
+ * @requires ../config/database
+ * @requires fs
+ * @requires csv-parse
+ */
+
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
@@ -9,12 +19,22 @@ const pool = require("../config/database");
 const fs = require("fs");
 const { parse } = require("csv-parse");
 
-// Route to display the form to find weather stations
+/**
+ * Display the form to find weather stations
+ * @route GET /find-weather-stations
+ * @returns {void} Renders the find-weather-stations page
+ */
 router.get("/find-weather-stations", (req, res) => {
   res.render("find-weather-stations", { stations: null, message: null });
 });
 
-// Route to handle the form submission
+/**
+ * Handle the weather station search form submission
+ * @route POST /find-weather-stations
+ * @param {Object} req.body - Request body
+ * @param {string} req.body.city - City name to search for
+ * @returns {void} Renders the find-weather-stations page with results
+ */
 router.post("/find-weather-stations", async (req, res) => {
   const city = req.body.city;
   try {
@@ -64,12 +84,23 @@ router.post("/find-weather-stations", async (req, res) => {
   }
 });
 
-// Route to display the NOAA stations page
+/**
+ * Display the NOAA stations page
+ * @route GET /noaa-stations
+ * @returns {void} Renders the index page
+ */
 router.get("/noaa-stations", (req, res) => {
   res.render("index");
 });
 
-// Route to display station details
+/**
+ * Display detailed information about a specific weather station
+ * @route GET /station-details
+ * @param {Object} req.query - Query parameters
+ * @param {string} req.query.usaf - USAF station identifier
+ * @param {string} req.query.wban - WBAN station identifier
+ * @returns {void} Renders the station-details page
+ */
 router.get("/station-details", async (req, res) => {
   const { usaf, wban } = req.query;
 
@@ -103,7 +134,14 @@ router.get("/station-details", async (req, res) => {
   }
 });
 
-// Route to find closest stations
+/**
+ * Find the closest weather stations to a given city
+ * @route POST /find-closest-stations
+ * @param {Object} req.body - Request body
+ * @param {string} req.body.city - City name to search for
+ * @param {number} [req.body.radius=10] - Search radius in miles
+ * @returns {void} Renders the closest-stations page with results
+ */
 router.post("/find-closest-stations", async (req, res) => {
   const city = req.body.city;
   const radius = parseFloat(req.body.radius) || 10; // Default to 10 miles if not specified

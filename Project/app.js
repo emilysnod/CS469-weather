@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Main application entry point for the BikePed Weather Data Management System
+ * @requires dotenv
+ * @requires express
+ * @requires path
+ * @requires ./models/database-init
+ * @requires ./routes/weather-data
+ * @requires ./routes/weather-stations
+ * @requires ./routes/weather-import
+ */
+
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
@@ -7,7 +18,10 @@ const weatherStationsRouter = require("./routes/weather-stations");
 const weatherImportRouter = require("./routes/weather-import");
 // const stationConversionRouter = require("./routes/station-conversion");
 
-// Initialize Express app
+/**
+ * Express application instance
+ * @type {import('express').Application}
+ */
 const app = express();
 const appPort = process.env.PORT || 3000;
 
@@ -23,7 +37,11 @@ app.set("views", path.join(__dirname, "views"));
 // Initialize database
 initializeAllDatabases();
 
-// Routes
+/**
+ * Home route handler
+ * @route GET /
+ * @returns {void} Renders the index page
+ */
 app.get("/", (req, res) => {
   res.render("index", { message: null });
 });
@@ -33,17 +51,28 @@ app.use("/api", weatherDataRouter);
 app.use("/", weatherStationsRouter);
 app.use("/", weatherImportRouter);
 
-// Serve the import page
+/**
+ * Import page route handler
+ * @route GET /import
+ * @returns {void} Serves the import-csv.html page
+ */
 app.get("/import", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "import-csv.html"));
 });
 
-// Serve the visualization page
+/**
+ * Visualization page route handler
+ * @route GET /visualize
+ * @returns {void} Serves the visualize-data.html page
+ */
 app.get("/visualize", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "visualize-data.html"));
 });
 
-// Start the server
+/**
+ * Start the Express server
+ * @listens {number} appPort - The port number to listen on
+ */
 app.listen(appPort, () => {
   console.log(`Server running at http://localhost:${appPort}`);
   console.log("Debugger can be attached");

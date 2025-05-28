@@ -1,4 +1,15 @@
-// Function to calculate distance between two points using Haversine formula
+/**
+ * @fileoverview Geographic utility functions for calculating distances and bounding boxes
+ */
+
+/**
+ * Calculates the distance between two geographic points using the Haversine formula
+ * @param {number} lat1 - Latitude of first point in degrees
+ * @param {number} lon1 - Longitude of first point in degrees
+ * @param {number} lat2 - Latitude of second point in degrees
+ * @param {number} lon2 - Longitude of second point in degrees
+ * @returns {number} Distance between points in kilometers
+ */
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth's radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -13,7 +24,17 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Function to calculate bounding box
+/**
+ * Calculates a bounding box around a geographic point
+ * @param {number} lat - Center latitude in degrees
+ * @param {number} lon - Center longitude in degrees
+ * @param {number} miles - Radius of the bounding box in miles
+ * @returns {Object} Bounding box coordinates
+ * @returns {number} returns.north - Northern boundary latitude
+ * @returns {number} returns.south - Southern boundary latitude
+ * @returns {number} returns.east - Eastern boundary longitude
+ * @returns {number} returns.west - Western boundary longitude
+ */
 function calculateBoundingBox(lat, lon, miles) {
   const milesToDegrees = miles / 69; // Approximate conversion factor
   return {

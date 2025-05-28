@@ -1,8 +1,17 @@
+/**
+ * @fileoverview Weather data API routes for the BikePed Weather Data Management System
+ * @requires express
+ * @requires pg
+ */
+
 const express = require("express");
 const router = express.Router();
 const { Pool } = require("pg");
 
-// Database connection with SSL enabled
+/**
+ * PostgreSQL connection pool configuration
+ * @type {import('pg').Pool}
+ */
 const pool = new Pool({
   connectionString: process.env.BIKEPED_DATABASE_URL,
   ssl: {
@@ -10,6 +19,16 @@ const pool = new Pool({
   },
 });
 
+/**
+ * Retrieves daily temperature data for a specified date range
+ * @async
+ * @function getDailyTemperatureData
+ * @param {string} startYear - The start year for the data range
+ * @param {string} endYear - The end year for the data range
+ * @returns {Promise<Array<{date: string, tmp: number}>>} Array of daily temperature records
+ * @throws {Error} If startYear or endYear is not provided
+ * @throws {Error} If there is a database error
+ */
 async function getDailyTemperatureData(startYear, endYear) {
   if (!startYear || !endYear) {
     throw new Error("Start year and end year are required");
@@ -49,6 +68,14 @@ async function getDailyTemperatureData(startYear, endYear) {
   }
 }
 
+/**
+ * GET /api/weather-data endpoint handler
+ * @route GET /api/weather-data
+ * @param {Object} req.query - Query parameters
+ * @param {string} req.query.startYear - Start year for data range
+ * @param {string} req.query.endYear - End year for data range
+ * @returns {Object} JSON response containing temperature data or error message
+ */
 router.get("/weather-data", async (req, res) => {
   try {
     const startYear = req.query.startYear;
