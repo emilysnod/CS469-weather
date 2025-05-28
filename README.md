@@ -18,7 +18,11 @@ There are two main components to this project, as well as some ancillary tools t
     - NCEI Weather Data Downloader: This is a python script to download all of the CSV files that store hourly data that the NCEI stores. This was developed as a precaution to get the NCEI data backed up in case it stopped being publicly available for any reason at some point in the future
     - plotweather.py: This was developed to demonstrate plotting data from the NCEI CSV files. It currently hard codes the name of the file and specific dates to plot from that file.
 
-
+## Best Practices
+- **Weather Station Selection**
+    - Enter a location on the main page. A city works best, and it does not need to be exact: 'New York', 'New york City', and 'NYC' all get good results for weather stations near New York, NY. Likewise, if the city name is ambiguous and you are looking for the less populous one, use the state name or abbreviation to find stations for that city (e.g. 'Portland' gives results for Portland, Oregon. Search 'Portland, ME' if that's the one you want).
+    - Not every weather station has hourly data, and as there is not an API for accessing this data, the only way to tell is to just attempt to download the data for that station ID and see if it can be parsed, and sometimes one location will have multiple station IDs. That said, international airports pretty reliably have weather stations that keep this hourly data. So it is usually best to choose one of these in the results that get shown. 
+    
 ## Getting Started
 
 ### Prerequisites
@@ -47,17 +51,16 @@ There are two main components to this project, as well as some ancillary tools t
    Create a `.env` file in the root directory with the following variables:
 
    ```
-   BIKEPED_DATABASE_URL=postgresql://username:password@host:port/database
-   NODE_ENV=development
+   BIKEPED_DATABASE_URL=postgresql://<username>:<password>@portaldb.its.pdx.edu:5432/bikeped_capstone?sslmode=require
    PORT=3000
    ```
 
-4. **Set up Python dependencies** (for visualization)
+4. **Set up Python dependencies** (for visualization, generally not necessary for the main project.)
    ```bash
    pip install -r requirements.txt
    ```
 
-## 🏃‍♂️ Running the Application
+## Running the Application
 
 ### Development Mode
 
@@ -79,7 +82,7 @@ npm run debug
 
 The application will be available at `http://localhost:3000`
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Project/
@@ -97,7 +100,6 @@ Project/
 ## 🔧 Available Endpoints
 
 - `/` - Dashboard home
-- `/add-weather` - Weather data input interface
 - `/visualize` - Data visualization tools
 - `/api/weather` - Weather data API endpoints
 
@@ -112,15 +114,14 @@ Project/
 - **Frontend**
 
   - EJS templating
-  - Modern JavaScript
+  - JavaScript
   - Data visualization libraries
 
 - **Data Processing**
-  - Python scripts for data analysis
   - CSV parsing utilities
   - Weather data processing tools
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Database Connection Issues
 
@@ -134,30 +135,17 @@ If you encounter database connection errors:
 
 2. **Network Access**
 
-   - Ensure VPN connection if required
-   - Verify IP whitelist in database configuration
-   - Check firewall settings
+   - Ensure you are connected the the MCECS network, either directly or via VPN
 
 3. **Connection Testing**
    ```bash
    psql "postgresql://username:password@host:port/database?ssl=true"
    ```
 
-### Common Issues
-
-1. **Module not found errors**
-
-   - Run `npm install` to ensure all dependencies are installed
-   - Check Node.js version compatibility
-
-2. **Database migration issues**
-   - Verify database schema matches application requirements
-   - Check database user permissions
-
-## 📝 License
+## License
 
 ???
 
-## 📧 Contact
+## Contact
 
 ???
