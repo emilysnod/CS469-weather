@@ -39,7 +39,8 @@ async function initializeNoaaDatabase() {
 
     await pool.query(createTableQuery);
 
-    // Change the owner of the table to bikeped_capstone, may
+    // Change the owner of the table to bikeped_capstone
+    
     await pool.query(
       "ALTER TABLE bike_ped.ABH_weather_data OWNER TO bikeped_capstone"
     );

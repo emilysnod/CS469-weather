@@ -37,6 +37,7 @@ router.get("/find-weather-stations", (req, res) => {
  */
 router.post("/find-weather-stations", async (req, res) => {
   const city = req.body.city;
+console.log(city)
   try {
     // Geocode city using OpenStreetMap
     const geoResp = await axios.get(
@@ -93,46 +94,6 @@ router.get("/noaa-stations", (req, res) => {
   res.render("index");
 });
 
-/**
- * Display detailed information about a specific weather station
- * @route GET /station-details
- * @param {Object} req.query - Query parameters
- * @param {string} req.query.usaf - USAF station identifier
- * @param {string} req.query.wban - WBAN station identifier
- * @returns {void} Renders the station-details page
- */
-router.get("/station-details", async (req, res) => {
-  const { usaf, wban } = req.query;
-
-  try {
-    // Read the ISD history file to find the station
-    const isdHistoryFile = fs.readFileSync("isd-history.csv", "utf-8");
-    const records = parse(isdHistoryFile, {
-      columns: true,
-      skip_empty_lines: true,
-    });
-
-    // Find the matching station
-    const station = records.find(
-      (record) => record.USAF === usaf && record.WBAN === wban
-    );
-
-    if (station) {
-      res.render("station-details", { station, error: null });
-    } else {
-      res.render("station-details", {
-        station: null,
-        error: "Station not found",
-      });
-    }
-  } catch (err) {
-    console.error("Error finding station details:", err);
-    res.render("station-details", {
-      station: null,
-      error: "Error retrieving station details",
-    });
-  }
-});
 
 /**
  * Find the closest weather stations to a given city
@@ -156,9 +117,9 @@ router.post("/find-closest-stations", async (req, res) => {
           format: "json",
           limit: 1,
         },
-        headers: {
-          "User-Agent": "Weather Station Finder",
-        },
+        // headers: {
+        //   "User-Agent": "Weather Station Finder",
+        // },
       }
     );
 

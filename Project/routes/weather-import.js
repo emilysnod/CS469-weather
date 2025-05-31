@@ -16,12 +16,7 @@ router.get("/import-csv", (req, res) => {
 async function getLocationFromCoordinates(latitude, longitude) {
   try {
     const response = await axios.get(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&layer=address`,
-      {
-        headers: {
-          "User-Agent": "WeatherStationImport/1.0",
-        },
-      }
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&layer=address`
     );
 
     const data = response.data;
