@@ -1,5 +1,5 @@
 /**
- * @fileoverview Weather data API routes for the BikePed Weather Data Management System
+ * @fileoverview Weather data API routes for the BikePed Weather
  * @requires express
  * @requires pg
  */

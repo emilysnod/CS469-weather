@@ -1,4 +1,4 @@
-# BikePed Weather Data Management System
+# BikePed Weather Data
 
 This tool supports the collection and management of weather data to be used in conjuction with the broader BikePed Portal. 
 
@@ -31,8 +31,16 @@ This project has two main componenets - a frontend for use by the BikePed admin 
     - **Enter a location on the main page.** 
     A city works best, and it does not need to be exact: 'New York', 'New york City', and 'NYC' all get good results for weather stations near New York, NY. Likewise, if the city name is ambiguous and you are looking for the less populous one, use the state name or abbreviation to find stations for that city (e.g. 'Portland' gives results for Portland, Oregon. Search 'Portland, ME' if that's the one you want).
     - **Choose Reliable Weather Stations**
-    Not every weather station has hourly data. Since there is not an API for accessing this data, the only way to tell is to just attempt to download the data for that station ID and see if it can be parsed. Sometimes one location will have multiple station IDs. That said, international airports pretty reliably have weather stations that keep this hourly data. So it is usually best to choose one of these in the results that get shown. 
-    
+    Not every weather station has hourly data. Since there is not an API for accessing this data, the only way to tell is to just attempt to download the data for that station ID and see if it can be parsed. Sometimes one location will have multiple station IDs. That said, international airports pretty reliably have weather stations that keep this hourly data. So it is usually best to choose one of these in the results that get shown.
+
+
+## Important Information
+- **The ISD Dataset**
+    Hourly weather from throughout the globe is maintained in a set of CSV files that NCEI hosts and (as of June 2025) updates on a regular basis. This is the Integrated Surface Data (ISD dataset) can be found at: https://www.ncei.noaa.gov/data/global-hourly/access/{year}/{stationid}.csv
+
+- **Station IDs**
+    There are a few steps involved in actually getting a station ID for a . Once coordinates are obtained for a location of interest, the isd-history.csv file is used as a lookup table to find the closest stations (via the Haversine Formula). This file provides two IDs for each station: The USAF (Air Force Datsav3 station number) and the WBAN (Weather-Bureau-Army-Navy), which represent two different networks of weather stations. The combination of these two IDs gets the ID used by the ISD dataset: some stations only participate in one network, and therefore their ID for the other will be all 9's. The stations that participate in both networks and therefore have IDs that are not all 9's seem to be ones with the best data. For this reason, these are the only ones that will be shown when a user searches for a city, though they can go directly to '/import-csv' to enter a station ID if they know a specific one.
+
 ## Getting Started
 
 ### Prerequisites
@@ -107,7 +115,7 @@ Project/
 └── templates/         # Additional templates
 ```
 
-## 🔧 Available Endpoints
+## Available Endpoints
 
 - `/` - Dashboard home
 - `/visualize` - Data visualization tools
