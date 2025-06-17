@@ -42,13 +42,13 @@ async function getDailyTemperatureData(startYear, endYear) {
       SELECT date, tmp
       FROM bike_ped.ABH_weather_data
       WHERE tmp IS NOT NULL
-        AND (tmp / 10.0) <= 176  -- Filter out temps above 80°C (176°F)
-        AND (tmp / 10.0) >= -58  -- Filter out temps below -50°C (-58°F)
+        AND tmp <= 248  -- Filter out temps above 120°C (248°F) 
+        AND tmp >= -148 -- Filter out temps below -100°C (-148°F)
     ),
     daily_temps AS (
       SELECT 
         date_trunc('day', date) as day,
-        AVG(tmp / 10.0) as avg_tmp  -- Convert from deci-fahrenheit to fahrenheit and average
+        AVG(tmp) as avg_tmp  -- Average the temperatures
       FROM valid_temps 
       WHERE date >= $1 AND date < $2
       GROUP BY date_trunc('day', date)

@@ -181,13 +181,135 @@ async function importCSVData(csvUrl, columns, lineLimit = 10) {
   `;
 
   let rowsImported = 0;
-  // If lineLimit is 0, import all rows (except header)
+  let stationAdded = false;
+
+  // Calculate how many rows to process
+  // If lineLimit is 0, process all rows (except header)
+  // Otherwise, process either lineLimit rows or all rows, whichever is smaller
   const maxRows =
     lineLimit === 0 ? rows.length - 1 : Math.min(lineLimit, rows.length - 1);
 
+  console.log(
+    `Processing ${maxRows} rows out of ${
+      rows.length - 1
+    } total rows (lineLimit: ${lineLimit})`
+  );
+
   // Process each row (skip header)
-  for (let i = 1; i <= maxRows; i++) {
+  for (let i = 1; i < maxRows; i++) {
     const row = rows[i];
+
+    // Check temperature and precipitation data
+    const tmpValue = row[headers.indexOf("TMP")];
+    const aa1Value = row[headers.indexOf("AA1")];
+    const dateValue = row[headers.indexOf("DATE")];
+
+    // Parse temperature
+    let tmp = null;
+    try {
+      // Split the temperature string by comma to separate value and quality control
+      const [tempValue, qualityControl] = tmpValue.split(",");
+      // Only process if quality control is 5
+      if (qualityControl === "5") {
+        const numValue = parseFloat(tempValue);
+        if (!isNaN(numValue)) {
+          tmp = numValue / 10; // Divide by 10 for storage
+        }
+      } else {
+        console.log(
+          `Skipping temperature with quality control ${qualityControl}: ${tempValue}`
+        );
+      }
+    } catch (e) {
+      console.error("Error parsing temperature:", tmpValue, e);
+      tmp = null;
+    }
+
+    // Parse precipitation data
+    let precip = null;
+    if (aa1Value) {
+      try {
+        const [period, amount, _, qualityControl] = aa1Value.split(",");
+        // Only process if quality control is 5
+        if (qualityControl === "5") {
+          precip = amount; // Keep only the middle value (amount)
+        } else {
+          console.log(
+            `Skipping precipitation with quality control ${qualityControl}: ${amount}`
+          );
+        }
+      } catch (e) {
+        console.error("Error parsing precipitation data:", aa1Value, e);
+      }
+    }
+
+    // Skip if temperature is invalid or precipitation is null
+    if (tmp === null || tmp > 248 || tmp < -148 || precip === null) {
+      console.log(
+        `Skipping row - Temperature: ${tmp}, Precipitation: ${precip}`
+      );
+      continue; // Skip this record
+    }
+
+    // Try to add station information if we haven't already
+    if (!stationAdded) {
+      try {
+        const latitude = parseFloat(row[headers.indexOf("LATITUDE")]);
+        const longitude = parseFloat(row[headers.indexOf("LONGITUDE")]);
+
+        if (isNaN(latitude) || isNaN(longitude)) {
+          console.error("Invalid latitude/longitude values:", {
+            latitude: row[headers.indexOf("LATITUDE")],
+            longitude: row[headers.indexOf("LONGITUDE")],
+          });
+        } else {
+          // Get location details from coordinates
+          const locationDetails = await getLocationFromCoordinates(
+            latitude,
+            longitude
+          );
+          console.log("Location details from coordinates:", locationDetails);
+
+          const stationValues = [
+            row[headers.indexOf("STATION")],
+            latitude,
+            longitude,
+            row[headers.indexOf("NAME")], // Keep original station name
+            locationDetails.city || "Unknown",
+            locationDetails.state || "Unknown",
+            locationDetails.country || "Unknown",
+          ];
+
+          console.log("Attempting to insert station with values:", {
+            station_id: stationValues[0],
+            latitude: stationValues[1],
+            longitude: stationValues[2],
+            station_name: stationValues[3],
+            city: stationValues[4],
+            state: stationValues[5],
+            country: stationValues[6],
+          });
+
+          try {
+            await pool.query(stationInsertQuery, stationValues);
+            console.log(
+              "Successfully inserted/updated station:",
+              stationValues[0]
+            );
+            stationAdded = true;
+          } catch (error) {
+            console.error("Error inserting station:", {
+              station_id: stationValues[0],
+              error: error.message,
+              detail: error.detail,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error processing station data:", error);
+      }
+    }
+
     const values = columns
       .filter((col) => !["NAME", "LATITUDE", "LONGITUDE"].includes(col))
       .map((col) => {
@@ -198,8 +320,12 @@ async function importCSVData(csvUrl, columns, lineLimit = 10) {
           return value.replace(/^"|"$/g, "").replace("T", " ");
         }
         if (col === "AA1") {
-          // Store raw AA1 value
-          return value;
+          // Return the parsed precipitation value
+          return precip;
+        }
+        if (col === "TMP") {
+          // Use the already parsed temperature value
+          return tmp;
         }
         // Try to parse numbers, but keep as string if not a valid number
         const numValue = parseFloat(value);
@@ -208,32 +334,6 @@ async function importCSVData(csvUrl, columns, lineLimit = 10) {
 
     await pool.query(insertQuery, values);
     rowsImported++;
-
-    // If this is the first row, also update the station information
-    if (i === 1) {
-      const latitude = parseFloat(row[headers.indexOf("LATITUDE")]);
-      const longitude = parseFloat(row[headers.indexOf("LONGITUDE")]);
-
-      // Get location details from coordinates
-      const locationDetails = await getLocationFromCoordinates(
-        latitude,
-        longitude
-      );
-      console.log("Location details from coordinates:", locationDetails);
-
-      const stationValues = [
-        values[headers.indexOf("STATION")],
-        latitude,
-        longitude,
-        row[headers.indexOf("NAME")], // Keep original station name
-        locationDetails.city,
-        locationDetails.state,
-        locationDetails.country,
-      ];
-
-      console.log("Final station values:", stationValues);
-      await pool.query(stationInsertQuery, stationValues);
-    }
   }
 
   return { success: true, rowsImported };

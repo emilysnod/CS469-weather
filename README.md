@@ -40,6 +40,9 @@ This project has two main componenets - a frontend for use by the BikePed admin 
 
 - **Station IDs**
     There are a few steps involved in actually getting a station ID for a . Once coordinates are obtained for a location of interest, the isd-history.csv file is used as a lookup table to find the closest stations (via the Haversine Formula). This file provides two IDs for each station: The USAF (Air Force Datsav3 station number) and the WBAN (Weather-Bureau-Army-Navy), which represent two different networks of weather stations. The combination of these two IDs gets the ID used by the ISD dataset: some stations only participate in one network, and therefore their ID for the other will be all 9's. The stations that participate in both networks and therefore have IDs that are not all 9's seem to be ones with the best data. For this reason, these are the only ones that will be shown when a user searches for a city, though they can go directly to '/import-csv' to enter a station ID if they know a specific one.
+- **Precipitation Data**
+    Precipitation data is in up to 4 columns in the ISD dataset (AA1-AA4). More information about this is in the included ISD dataset documentation, but the data can be in 1,3,6, or 24 hour intervals. The way we have designed this, it only imports only the 1 hour data.
+
 
 ## Getting Started
 
